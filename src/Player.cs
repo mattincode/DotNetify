@@ -33,6 +33,8 @@ namespace DotNetify
             }
             private set
             {
+                Contract.Requires<ArgumentNullException>(value != null);
+
                 this.SetProperty(ref _Session, value);
             }
         }
@@ -44,24 +46,66 @@ namespace DotNetify
             this.Session = s;
         }
 
-        public void Load()
+        public void Load(Track track)
         {
-            throw new NotImplementedException();
+            Contract.Requires<ArgumentNullException>(track != null);
+
+            Session s = this.GetSession();
+            lock (s.LibraryLock)
+            {
+                Spotify.CheckForError(NativeMethods.sp_session_player_load(s.Handle, track.Handle));
+            }
         }
 
         public void Play()
         {
-            throw new NotImplementedException();
+            Session s = this.GetSession();
+            lock (s.LibraryLock)
+            {
+                Spotify.CheckForError(NativeMethods.sp_session_player_play(s.Handle, true));
+                this.IsPlaying = true;
+            }
         }
 
         public void Pause()
         {
-            throw new NotImplementedException();
+            Session s = this.GetSession();
+            lock (s.LibraryLock)
+            {
+                Spotify.CheckForError(NativeMethods.sp_session_player_play(s.Handle, false));
+                this.IsPlaying = false;
+            }
+        }
+
+        public void Seek(int offset)
+        {
+            Contract.Requires<ArgumentOutOfRangeException>(offset >= 0);
+
+            Session s = this.GetSession();
+            lock (s.LibraryLock)
+            {
+                Spotify.CheckForError(NativeMethods.sp_session_player_seek(s.Handle, offset));
+            }
         }
 
         public void Stop()
         {
-            throw new NotImplementedException();
+            Session s = this.GetSession();
+            lock (s.LibraryLock)
+            {
+                Spotify.CheckForError(NativeMethods.sp_session_player_unload(s.Handle));
+                this.IsPlaying = false;
+            }
+        }
+
+        private Session GetSession()
+        {
+            Session s = this.Session;
+            if (s == null)
+            {
+                throw new InvalidOperationException("Session is null, operation cannot be performed.");
+            }
+            return s;
         }
     }
 }

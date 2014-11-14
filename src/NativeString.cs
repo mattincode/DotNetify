@@ -61,10 +61,9 @@ namespace DotNetify
 
         public void Dispose()
         {
-            IntPtr handle = Interlocked.Exchange(ref _Handle, IntPtr.Zero);
             this.Size = 0;
             this.Value = null;
-            Marshal.FreeHGlobal(handle);
+            Marshal.FreeHGlobal(Interlocked.Exchange(ref _Handle, IntPtr.Zero));
 
             GC.SuppressFinalize(this);
         }

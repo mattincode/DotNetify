@@ -80,7 +80,7 @@ namespace DotNetify
         public virtual void NotifyMainThread(Session session) { }
 
         /// <summary>
-        /// Called when there is decompressed audio data available..
+        /// Called when there is decompressed audio data available.
         /// </summary>
         /// <param name="session">The <see cref="Session"/>.</param>
         /// <param name="format">The audio format descriptor.</param>
@@ -99,46 +99,110 @@ namespace DotNetify
         }
 
         /// <summary>
-        /// Music has been paused because an account only allows music
-        /// to be played from one location simultaneously.
+        /// Music has been paused because an account only allows music to be played from one location simultaneously.
         /// </summary>
         /// <remarks>
         /// When this callback is invoked the application should behave just as if the user pressed the pause button. 
         /// The application should also display a message to the user indicating the playback has been paused because another 
         /// application is playing using the same account.
         /// </remarks>
-        /// <param name="session"></param>
+        /// <param name="session">The <see cref="Session"/>.</param>
         public virtual void PlayTokenLost(Session session) { }
 
-        public virtual void LogMessage(Session session, string entry) { }
+        /// <summary>
+        /// Logging callback.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
+        /// <param name="message">The log message</param>
+        public virtual void LogMessage(Session session, string message) { }
 
+        /// <summary>
+        /// End of track. Called when the currently played track has reached its end.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
         public virtual void EndOfTrack(Session session) { }
 
+        /// <summary>
+        /// Streaming error. Called when streaming cannot start or continue.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
+        /// <param name="error">The error that happened.</param>
         public virtual void StreamingError(Session session, Error error) { }
 
+        /// <summary>
+        /// Called after user info (anything related to <see cref="User"/>-objects) have been updated.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
         public virtual void UserinfoUpdated(Session session) { }
 
+        /// <summary>
+        /// Called when audio playback should start.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
         public virtual void StartPlayback(Session session) { }
 
+        /// <summary>
+        /// Called when audio playback should stop.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
         public virtual void StopPlayback(Session session) { }
 
-        public virtual void GetAudioBufferStats(Session session, out AudioBufferStatistics stats)
+        /// <summary>
+        /// Gets playback statistics.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
+        /// <param name="stats"><see cref="AudioBufferStatistics"/> for feedback about player statistics.</param>
+        public virtual void GetAudioBufferStats(Session session, ref AudioBufferStatistics stats)
         {
             stats = default(AudioBufferStatistics);
         }
 
+        /// <summary>
+        /// Called when offline synchronization status is updated.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
         public virtual void OfflineSynchronizationStatusChanged(Session session) { }
 
+        /// <summary>
+        /// Called when there was an offline error.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
+        /// <param name="error"></param>
         public virtual void OfflineError(Session session, Error error) { }
 
+        /// <summary>
+        /// Called when storable credentials have been updated, usually called when we have connected to the API.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
+        /// <param name="blob">
+        /// A string which contains an encrypted token that can be stored safely on disk 
+        /// instead of storing plaintext passwords.
+        /// </param>
         public virtual void CredentialsBlobUpdated(Session session, string blob) { }
 
+        /// <summary>
+        /// Called when the connection state has updated - such as when logging in, going offline, etc.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
         public virtual void ConnectionStateUpdated(Session session) { }
 
+        /// <summary>
+        /// Called when there is a scrobble error event.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
+        /// <param name="error">The error that happened during scrolling.</param>
         public virtual void ScrobbleError(Session session, Error error) { }
 
+        /// <summary>
+        /// Called when there is a change in the private session mode.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/>.</param>
+        /// <param name="isPrivate"></param>
         public virtual void SessionModeChanged(Session session, bool isPrivate) { }
 
+        /// <summary>
+        /// A <see cref="CallbackHandler"/> with all calls ending in the void.
+        /// </summary>
         private class NullCallbackHandler : CallbackHandler { }
     }
 }

@@ -22,6 +22,13 @@ namespace DotNetify
             }
         }
 
+        protected SpotifyObject() { }
+
+        protected SpotifyObject(IntPtr handle)
+        {
+            this.Handle = handle;
+        }
+
         ~SpotifyObject()
         {
             this.Dispose(false);

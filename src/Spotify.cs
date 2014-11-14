@@ -14,15 +14,17 @@ namespace DotNetify
 
         internal static void CheckForError(Error error)
         {
+            string errorMessage = NativeMethods.sp_error_message(error).AsString();
+
             switch (error)
             {
                 case Error.NetworkDisabled:
                 case Error.ConnectionIssues:
-                    throw new System.Net.WebException(NativeMethods.GetErrorMessage(error).AsString());
+                    throw new System.Net.WebException(errorMessage);
                 case Error.InvalidArgument:
-                    throw new ArgumentException(NativeMethods.GetErrorMessage(error).AsString());
+                    throw new ArgumentException(errorMessage);
                 case Error.IndexOutOfRange:
-                    throw new IndexOutOfRangeException(NativeMethods.GetErrorMessage(error).AsString());
+                    throw new IndexOutOfRangeException(errorMessage);
                 case Error.BadApiVersion:
                 case Error.ApiInitializationFailed:
                 case Error.InvalidApplicationKey:
@@ -53,10 +55,11 @@ namespace DotNetify
                 case Error.OfflineLicenseError:
                 case Error.LastFmAuthenticationError:
                 case Error.SystemFailure:
-                    throw new InvalidOperationException(NativeMethods.GetErrorMessage(error).AsString());
+                    throw new InvalidOperationException(errorMessage);
                 case Error.None:
-                default:
                     break;
+                default:
+                    throw new ArgumentException("The value of parameter error was undefined.", "error");
             }
         }
 

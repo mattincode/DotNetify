@@ -11,6 +11,7 @@
     <AssemblyName>DotNetify</AssemblyName>
     <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
+    <TargetFrameworkProfile />
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|AnyCPU' ">
     <DebugSymbols>true</DebugSymbols>
@@ -21,6 +22,7 @@
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Release|AnyCPU' ">
     <DebugType>pdbonly</DebugType>
@@ -31,6 +33,7 @@
     <WarningLevel>4</WarningLevel>
     <PlatformTarget>x86</PlatformTarget>
     <DocumentationFile>bin\Release\DotNetify.XML</DocumentationFile>
+    <Prefer32Bit>false</Prefer32Bit>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -43,6 +46,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Album.cs" />
+    <Compile Include="AlbumType.cs" />
+    <Compile Include="Artist.cs" />
     <Compile Include="ArtistBrowseType.cs" />
     <Compile Include="AudioBufferStatistics.cs" />
     <Compile Include="AudioFormat.cs" />
@@ -52,8 +58,15 @@
     <Compile Include="ConnectionType.cs" />
     <Compile Include="Error.cs" />
     <Compile Include="HashF.cs" />
+    <Compile Include="ImageFormat.cs" />
     <Compile Include="ImageSize.cs" />
+    <Compile Include="LinkType.cs" />
+    <Compile Include="NativeByteArray.cs" />
+    <Compile Include="NativeStruct.cs" />
+    <Compile Include="ProxyConfig.cs" />
+    <Compile Include="SessionConfig.cs" />
     <Compile Include="SessionModeChangedEventArgs.cs" />
+    <Compile Include="SessionObject.cs" />
     <Compile Include="TextEventArgs.cs" />
     <Compile Include="MusicDeliveryEventArgs.cs" />
     <Compile Include="MusicPacket.cs" />
@@ -75,7 +88,9 @@
     <Compile Include="SpotifyErrorEventArgs.cs" />
     <Compile Include="SpotifyEventArgs.cs" />
     <Compile Include="SpotifyObject.cs" />
-    <Compile Include="Subscribers.cs" />
+    <Compile Include="ToplistRegion.cs" />
+    <Compile Include="ToplistType.cs" />
+    <Compile Include="Track.cs" />
     <Compile Include="TrackAvailability.cs" />
     <Compile Include="TrackOfflineStatus.cs" />
   </ItemGroup>
