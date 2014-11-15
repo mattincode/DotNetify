@@ -22,9 +22,30 @@ namespace DotNetify
         private readonly SessionConfig config;
 
         /// <summary>
+        /// Called when there is a connection error, and the library has problems
+        /// reconnecting to the Spotify service. Could be called multiple times (as
+        /// long as the problem is present).
+        /// </summary>
+        public event EventHandler<SpotifyResultEventArgs> ConnectionError;
+
+        /// <summary>
+        /// Called when the connection state has updated - such as when logging in, going offline, etc.
+        /// </summary>
+        public event EventHandler<ConnectionStateUpdatedEventArgs> ConnectionStateUpdated;
+
+        /// <summary>
+        /// Called when storable credentials have been updated, usually called when we have connected to the API.
+        /// </summary>
+        /// <remarks>
+        /// The credentials blob is a string which contains an encrypted token that can be stored safely on disk 
+        /// instead of storing plaintext passwords.
+        /// </remarks>
+        public event EventHandler<TextEventArgs> CredentialsBlobUpdated;
+
+        /// <summary>
         /// Called when login has been processed.
         /// </summary>
-        public event EventHandler<SpotifyErrorEventArgs> LoggedIn;
+        public event EventHandler<LoggedInEventArgs> LoggedIn;
 
         /// <summary>
         /// Called when logout has been processed. Either called explicitly
@@ -38,13 +59,6 @@ namespace DotNetify
         /// </summary>
         /// <remarks>If you have metadata cached outside of DotNetify, you should purge your caches and fetch new versions.</remarks>
         public event EventHandler<SpotifyEventArgs> MetadataUpdateReceived;
-
-        /// <summary>
-        /// Called when there is a connection error, and the library has problems
-        /// reconnecting to the Spotify service. Could be called multiple times (as
-        /// long as the problem is present).
-        /// </summary>
-        public event EventHandler<SpotifyErrorEventArgs> ConnectionError;
 
         /// <summary>
         /// Called when the access point wants to display a message to the user.
@@ -85,7 +99,7 @@ namespace DotNetify
         /// <summary>
         /// Streaming error. Called when streaming cannot start or continue.
         /// </summary>
-        public event EventHandler<SpotifyErrorEventArgs> StreamingError;
+        public event EventHandler<SpotifyResultEventArgs> StreamingError;
 
         /// <summary>
         /// Called after user info (anything related to <see cref="User"/>-objects) have been updated.
@@ -110,26 +124,12 @@ namespace DotNetify
         /// <summary>
         /// Called when there was an offline error.
         /// </summary>
-        public event EventHandler<SpotifyErrorEventArgs> OfflineError;
-
-        /// <summary>
-        /// Called when storable credentials have been updated, usually called when we have connected to the API.
-        /// </summary>
-        /// <remarks>
-        /// The credentials blob is a string which contains an encrypted token that can be stored safely on disk 
-        /// instead of storing plaintext passwords.
-        /// </remarks>
-        public event EventHandler<TextEventArgs> CredentialsBlobUpdated;
-
-        /// <summary>
-        /// Called when the connection state has updated - such as when logging in, going offline, etc.
-        /// </summary>
-        public event EventHandler<SpotifyEventArgs> ConnectionStateUpdated;
+        public event EventHandler<SpotifyResultEventArgs> OfflineError;
 
         /// <summary>
         /// Called when there is a scrobble error event.
         /// </summary>
-        public event EventHandler<SpotifyErrorEventArgs> ScrobbleError;
+        public event EventHandler<SpotifyResultEventArgs> ScrobbleError;
 
         /// <summary>
         /// Called when there is a change in the private session mode.
@@ -139,20 +139,50 @@ namespace DotNetify
         /// <summary>
         /// Backing field.
         /// </summary>
-        private object _LibraryLock = new object();
+        private int _CacheSize;
 
         /// <summary>
-        /// The lock object used to lock access to the library functions.
+        /// The maximum cache size. Setting this to 0 will let libspotify resize the cache to 10% of free disk space.
         /// </summary>
-        internal object LibraryLock
+        public int CacheSize
         {
             get
             {
-                return _LibraryLock;
+                throw new NotImplementedException();
+
+                return _CacheSize;
+            }
+            set
+            {
+                Contract.Requires<ArgumentOutOfRangeException>(value >= 0);
+
+                throw new NotImplementedException();
+
+                this.SetProperty(ref _CacheSize, value);
+            }
+        }
+
+        /// <summary>
+        /// Backing field.
+        /// </summary>
+        private ConnectionState _ConnectionState;
+
+        /// <summary>
+        /// The connection state of the specified session.
+        /// </summary>
+        public ConnectionState ConnectionState
+        {
+            get
+            {
+                throw new NotImplementedException();
+
+                return _ConnectionState;
             }
             private set
             {
-                this.SetProperty(ref _LibraryLock, value);
+                throw new NotImplementedException();
+
+                this.SetProperty(ref _ConnectionState, value);
             }
         }
 
@@ -198,10 +228,59 @@ namespace DotNetify
         }
 
         /// <summary>
+        /// Backing field.
+        /// </summary>
+        private User _User;
+
+        /// <summary>
+        /// Fetches the currently logged in user.
+        /// </summary>
+        public User User
+        {
+            get
+            {
+                throw new NotImplementedException();
+
+                return _User;
+            }
+            private set
+            {
+                throw new NotImplementedException();
+
+                this.SetProperty(ref _User, value);
+            }
+        }
+
+        ///// <summary>
+        ///// Backing field.
+        ///// </summary>
+        //private byte[] _UserData;
+
+        ///// <summary>
+        ///// The userdata associated with the session.
+        ///// </summary>
+        //public byte[] UserData
+        //{
+        //    get
+        //    {
+        //        throw new NotImplementedException();
+
+        //        return _UserData;
+        //    }
+        //    set
+        //    {
+        //        throw new NotImplementedException();
+
+        //        this.SetProperty(ref _UserData, value);
+        //    }
+        //}
+
+        /// <summary>
         /// Initializes a new <see cref="Session"/>.
         /// </summary>
         public Session(SessionConfig sessionConfig)
         {
+            Contract.Requires<ArgumentNullException>(sessionConfig != null);
             Contract.Requires<ArgumentException>(sessionConfig.CallbackHandler != null);
 
             this.config = sessionConfig;
@@ -261,11 +340,114 @@ namespace DotNetify
                 config.userdata = nativeUserData;
 
                 IntPtr sessionHandle = IntPtr.Zero;
-                NativeMethods.sp_session_create(ref config, ref sessionHandle);
+                lock (NativeMethods.LibraryLock)
+                {
+                    NativeMethods.sp_session_create(ref config, ref sessionHandle);
+                }
                 this.Handle = sessionHandle;
             }
 
             this.Player = new Player(this);
+
+            this.ConnectionStateUpdated += (s, e) => this.ConnectionState = e.ConnectionState;
+            this.LoggedIn += (s, e) => 
+            {
+                if (e.Result == Result.Ok)
+                {
+                    this.User = e.User;
+                }
+            };
+            this.LoggedOut += (s, e) => this.User = null;
+        }
+
+        /// <summary>
+        /// Flushes the caches.
+        /// </summary>
+        /// <remarks>
+        /// This will make libspotify write all data that is meant to be stored on disk to the disk immediately. libspotify does 
+        /// this periodically by itself and also on logout. So under normal conditions this should never need to be used.
+        /// </remarks>
+        public void Flush()
+        {
+            lock (NativeMethods.LibraryLock)
+            {
+                NativeMethods.sp_session_flush_caches(this.Handle);
+            }
+        }
+
+        /// <summary>
+        /// Removes stored credentials in libspotify.
+        /// </summary>
+        public void ForgetMe()
+        {
+            lock (NativeMethods.LibraryLock)
+            {
+                NativeMethods.sp_session_forget_me(this.Handle);
+            }
+        }
+
+        /// <summary>
+        /// Logs in the specified username/password combo. This initiates the login in the background.
+        /// A callback is called when login is complete.
+        /// </summary>
+        /// <param name="username">The username to log in.</param>
+        /// <param name="password">The password for the specified username.</param>
+        /// <param name="rememberMe">If set, the username / password will be remembered by libspotify.</param>
+        /// <param name="blob">
+        /// If you have received a blob in the <see cref="E:CredentialsBlobUpdated"/>-event you can pass this here instead of password.
+        /// </param>
+        public void Login(string username, string password, bool rememberMe, string blob = null)
+        {
+            Contract.Requires<ArgumentNullException>(username != null);
+            Contract.Requires<ArgumentNullException>(password != null || blob != null);
+
+            using (NativeString nativeUsername = new NativeString(username))
+            using (NativeString nativePassword = new NativeString(password))
+            {
+                this.Login(nativeUsername, nativePassword, rememberMe, blob);
+            }
+        }
+
+        /// <summary>
+        /// Logs in the specified username/password combo. This initiates the login in the background.
+        /// A callback is called when login is complete.
+        /// </summary>
+        /// <param name="utf8Password">A pointer to the UTF-8 encoded password.</param>
+        /// <param name="utf8Username">A pointer to the UTF-8 encoded username.</param>
+        /// <param name="rememberMe">If set, the username / password will be remembered by libspotify.</param>
+        /// <param name="blob">
+        /// If you have received a blob in the <see cref="E:CredentialsBlobUpdated"/>-event you can pass this here instead of password.
+        /// </param>
+        public void Login(IntPtr utf8Username, IntPtr utf8Password, bool rememberMe, string blob = null)
+        {
+            Contract.Requires<ArgumentException>(utf8Username != IntPtr.Zero);
+            Contract.Requires<ArgumentException>(utf8Password != IntPtr.Zero);
+
+            using (NativeString nativeBlob = new NativeString(blob))
+            {
+                lock (NativeMethods.LibraryLock)
+                {
+                    Spotify.CheckForError(NativeMethods.sp_session_login(this.Handle, utf8Username, utf8Password, rememberMe, nativeBlob));
+                }
+            }
+        }
+
+        /// <summary>
+        /// Logs out the currently logged in user.
+        /// </summary>
+        /// <remarks>
+        /// Always call this before terminating the application and libspotify is currently
+        /// logged in. Otherwise, the settings and cache may be lost.
+        /// 
+        /// <u>Will automatically be called on <see cref="M:Dispose"/>.</u> If you dispose the <see cref="Session"/>
+        /// correctly, this will be called and everything will be safe.
+        /// </remarks>
+        public void Logout()
+        {
+            lock (NativeMethods.LibraryLock)
+            {
+                Spotify.CheckForError(NativeMethods.sp_session_logout(this.Handle));
+            }
         }
 
         /// <summary>
@@ -273,21 +455,58 @@ namespace DotNetify
         /// </summary>
         public int ProcessEvents()
         {
-            int nextRequest = 0;
-            Spotify.CheckForError(NativeMethods.sp_session_process_events(this.Handle, ref nextRequest));
-            return nextRequest;
+            lock (NativeMethods.LibraryLock)
+            {
+                int nextRequest = 0;
+                Spotify.CheckForError(NativeMethods.sp_session_process_events(this.Handle, ref nextRequest));
+                return nextRequest;
+            }
+        }
+
+        /// <summary>
+        /// Log in the remembered user if last user that logged in logged in with remember me-flag set.
+        /// </summary>
+        /// <exception cref="InvalidOperationException">No stored credentials found to relogin.</exception>
+        public void Relogin()
+        {
+            if (this.TryRelogin())
+            {
+                throw new InvalidOperationException("There were no credentials to relogin from, log in manually.");
+            }
+        }
+
+        /// <summary>
+        /// Attempts to log in the remembered user and indicates success or failure.
+        /// </summary>
+        /// <returns>
+        /// <c>true</c> if the relogin was successfull or <c>false</c> if not. In those cases request the username/password-combination
+        /// from the user and log in regularly via <see cref="M:Login"/>.
+        /// </returns>
+        public bool TryRelogin()
+        {
+            lock (NativeMethods.LibraryLock)
+            {
+                return (NativeMethods.sp_session_relogin(this.Handle) == Result.Ok);
+            }
         }
 
         /// <summary>
         /// Disposes the <see cref="Session"/> releasing it from the memory.
         /// </summary>
-        /// <param name="disposing"></param>
+        /// <param name="disposing">Indicates whether to dispose managed resources as well.</param>
         protected override void Dispose(bool disposing)
         {
+            this.Logout();
+            lock (NativeMethods.LibraryLock)
+            {
+                NativeMethods.sp_session_release(this.Handle);
+            }
             base.Dispose(disposing);
         }
 
-        private void ConnectionErrorCallback(IntPtr session, Error error)
+        #region Callbacks
+
+        private void ConnectionErrorCallback(IntPtr session, Result error)
         {
             if (this.Handle == session)
             {
@@ -300,8 +519,17 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.ConnectionStateUpdated(this);
-                this.Raise(this.ConnectionStateUpdated);
+                ConnectionState state;
+                lock (NativeMethods.LibraryLock)
+                {
+                    state = NativeMethods.sp_session_connectionstate(this.Handle);
+                }
+                this.config.CallbackHandler.ConnectionStateUpdated(this, state);
+                EventHandler<ConnectionStateUpdatedEventArgs> handler = this.ConnectionStateUpdated;
+                if (handler != null)
+                {
+                    handler(this, new ConnectionStateUpdatedEventArgs(this, state));
+                }
             }
         }
 
@@ -333,12 +561,21 @@ namespace DotNetify
             }
         }
 
-        private void LoggedInCallback(IntPtr session, Error error)
+        private void LoggedInCallback(IntPtr session, Result error)
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.LoggedIn(this, error);
-                this.Raise(this.LoggedIn, error);
+                User user;
+                lock (NativeMethods.LibraryLock)
+                {
+                    user = new User(this, NativeMethods.sp_session_user(this.Handle));
+                }
+                this.config.CallbackHandler.LoggedIn(this, error, user);
+                EventHandler<LoggedInEventArgs> handler = this.LoggedIn;
+                if (handler != null)
+                {
+                    handler(this, new LoggedInEventArgs(this, error, user));
+                }
             }
         }
 
@@ -405,7 +642,7 @@ namespace DotNetify
             }
         }
 
-        private void OfflineErrorCallback(IntPtr session, Error error)
+        private void OfflineErrorCallback(IntPtr session, Result error)
         {
             if (this.Handle == session)
             {
@@ -445,7 +682,7 @@ namespace DotNetify
             }
         }
 
-        private void ScrobbleErrorCallback(IntPtr session, Error error)
+        private void ScrobbleErrorCallback(IntPtr session, Result error)
         {
             if (this.Handle == session)
             {
@@ -472,7 +709,7 @@ namespace DotNetify
             }
         }
 
-        private void StreamingErrorCallback(IntPtr session, Error error)
+        private void StreamingErrorCallback(IntPtr session, Result error)
         {
             if (this.Handle == session)
             {
@@ -490,6 +727,8 @@ namespace DotNetify
             }
         }
 
+        #endregion
+
         private void Raise(EventHandler<SpotifyEventArgs> handler)
         {
             if (handler != null)
@@ -498,11 +737,11 @@ namespace DotNetify
             }
         }
 
-        private void Raise(EventHandler<SpotifyErrorEventArgs> handler, Error error)
+        private void Raise(EventHandler<SpotifyResultEventArgs> handler, Result error)
         {
             if (handler != null)
             {
-                handler(this, new SpotifyErrorEventArgs(this, error));
+                handler(this, new SpotifyResultEventArgs(this, error));
             }
         }
 

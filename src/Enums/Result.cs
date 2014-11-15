@@ -9,7 +9,7 @@ namespace DotNetify
     /// <summary>
     /// Contains spotify error and return values.
     /// </summary>
-    public enum Error
+    public enum Result
     {
         /// <summary>
         /// No errors encountered.

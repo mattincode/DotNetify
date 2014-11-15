@@ -51,7 +51,7 @@ namespace DotNetify
             Contract.Requires<ArgumentNullException>(track != null);
 
             Session s = this.GetSession();
-            lock (s.LibraryLock)
+            lock (NativeMethods.LibraryLock)
             {
                 Spotify.CheckForError(NativeMethods.sp_session_player_load(s.Handle, track.Handle));
             }
@@ -60,7 +60,7 @@ namespace DotNetify
         public void Play()
         {
             Session s = this.GetSession();
-            lock (s.LibraryLock)
+            lock (NativeMethods.LibraryLock)
             {
                 Spotify.CheckForError(NativeMethods.sp_session_player_play(s.Handle, true));
                 this.IsPlaying = true;
@@ -70,10 +70,21 @@ namespace DotNetify
         public void Pause()
         {
             Session s = this.GetSession();
-            lock (s.LibraryLock)
+            lock (NativeMethods.LibraryLock)
             {
                 Spotify.CheckForError(NativeMethods.sp_session_player_play(s.Handle, false));
                 this.IsPlaying = false;
+            }
+        }
+
+        public void Prefetch(Track track)
+        {
+            Contract.Requires<ArgumentNullException>(track != null);
+
+            Session s = this.GetSession();
+            lock (NativeMethods.LibraryLock)
+            {
+                Spotify.CheckForError(NativeMethods.sp_session_player_prefetch(s.Handle, track.Handle));
             }
         }
 
@@ -82,7 +93,7 @@ namespace DotNetify
             Contract.Requires<ArgumentOutOfRangeException>(offset >= 0);
 
             Session s = this.GetSession();
-            lock (s.LibraryLock)
+            lock (NativeMethods.LibraryLock)
             {
                 Spotify.CheckForError(NativeMethods.sp_session_player_seek(s.Handle, offset));
             }
@@ -91,7 +102,7 @@ namespace DotNetify
         public void Stop()
         {
             Session s = this.GetSession();
-            lock (s.LibraryLock)
+            lock (NativeMethods.LibraryLock)
             {
                 Spotify.CheckForError(NativeMethods.sp_session_player_unload(s.Handle));
                 this.IsPlaying = false;

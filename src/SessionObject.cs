@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DotNetify
 {
-    public class SessionObject : SpotifyObject
+    public abstract class SessionObject : SpotifyObject
     {
         private Session _Session;
 
@@ -29,5 +29,19 @@ namespace DotNetify
         {
             this.Session = session;
         }
+
+        /// <summary>
+        /// Increases the reference count to the specified instance preventing it from being released on
+        /// <see cref="Dispose"/>. See remarks.
+        /// </summary>
+        /// <remarks>
+        /// <para>
+        /// Calling <see cref="M:Dispose"/> decreases the reference count once.
+        /// </para>
+        /// <para>
+        /// You usually WON'T need to call this manually. As long as everything is being disposed only when
+        /// no other instance needs the instance anymore, this does not need to be called.</para>
+        /// </remarks>
+        public abstract void AddRef();
     }
 }

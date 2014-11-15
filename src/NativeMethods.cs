@@ -1,6 +1,8 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics.Contracts;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Threading.Tasks;
@@ -20,7 +22,7 @@ namespace DotNetify
     internal delegate void inboxpost_complete_cb(IntPtr result, IntPtr userData);
 
 
-    internal delegate void connection_error(IntPtr session, Error error);
+    internal delegate void connection_error(IntPtr session, Result error);
 
     internal delegate void connectionstate_updated(IntPtr session);
 
@@ -30,7 +32,7 @@ namespace DotNetify
 
     internal delegate void get_audio_buffer_stats(IntPtr session, ref AudioBufferStatistics stats);
 
-    internal delegate void logged_in(IntPtr session, Error error);
+    internal delegate void logged_in(IntPtr session, Result error);
 
     internal delegate void logged_out(IntPtr session);
 
@@ -44,7 +46,7 @@ namespace DotNetify
 
     internal delegate void notify_main_thread(IntPtr session);
 
-    internal delegate void offline_error(IntPtr session, Error error);
+    internal delegate void offline_error(IntPtr session, Result error);
 
     internal delegate void offline_status_updated(IntPtr session);
 
@@ -52,32 +54,44 @@ namespace DotNetify
 
     internal delegate void private_session_mode_changed(IntPtr session, [MarshalAs(UnmanagedType.I1)] bool is_private);
 
-    internal delegate void scrobble_error(IntPtr session, Error error);
+    internal delegate void scrobble_error(IntPtr session, Result error);
 
     internal delegate void start_playback(IntPtr session);
 
     internal delegate void stop_playback(IntPtr session);
 
-    internal delegate void streaming_error(IntPtr session, Error error);
+    internal delegate void streaming_error(IntPtr session, Result error);
 
     internal delegate void userinfo_updated(IntPtr session);
 
     internal static class NativeMethods
     {
-        [DllImport("libspotify")]
-        internal static extern IntPtr sp_error_message(Error error);
+        private static readonly object _LibraryLock = new object();
+
+        public static object LibraryLock
+        {
+            get
+            {
+                Contract.Ensures(Contract.Result<object>() != null);
+
+                return _LibraryLock;
+            }
+        }
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_create(ref sp_session_config config, ref IntPtr sess);
+        internal static extern IntPtr sp_error_message(Result error);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_release(IntPtr sess);
+        internal static extern Result sp_session_create(ref sp_session_config config, ref IntPtr sess);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_login(IntPtr session, IntPtr username, IntPtr password, [MarshalAs(UnmanagedType.I1)] bool remember_me, IntPtr blob);
+        internal static extern Result sp_session_release(IntPtr sess);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_relogin(IntPtr session);
+        internal static extern Result sp_session_login(IntPtr session, IntPtr username, IntPtr password, [MarshalAs(UnmanagedType.I1)] bool remember_me, IntPtr blob);
+
+        [DllImport("libspotify")]
+        internal static extern Result sp_session_relogin(IntPtr session);
 
         [DllImport("libspotify")]
         internal static extern int sp_session_remembered_user(IntPtr session, IntPtr buffer, UIntPtr buffer_size);
@@ -86,16 +100,16 @@ namespace DotNetify
         internal static extern IntPtr sp_session_user_name(IntPtr session);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_forget_me(IntPtr session);
+        internal static extern Result sp_session_forget_me(IntPtr session);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_session_user(IntPtr session);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_logout(IntPtr session);
+        internal static extern Result sp_session_logout(IntPtr session);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_flush_caches(IntPtr session);
+        internal static extern Result sp_session_flush_caches(IntPtr session);
 
         [DllImport("libspotify")]
         internal static extern ConnectionState sp_session_connectionstate(IntPtr session);
@@ -104,25 +118,25 @@ namespace DotNetify
         internal static extern IntPtr sp_session_userdata(IntPtr session);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_set_cache_size(IntPtr session, UIntPtr size);
+        internal static extern Result sp_session_set_cache_size(IntPtr session, UIntPtr size);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_process_events(IntPtr session, ref int next_timeout);
+        internal static extern Result sp_session_process_events(IntPtr session, ref int next_timeout);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_player_load(IntPtr session, IntPtr track);
+        internal static extern Result sp_session_player_load(IntPtr session, IntPtr track);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_player_seek(IntPtr session, int offset);
+        internal static extern Result sp_session_player_seek(IntPtr session, int offset);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_player_play(IntPtr session, [MarshalAs(UnmanagedType.I1)] bool play);
+        internal static extern Result sp_session_player_play(IntPtr session, [MarshalAs(UnmanagedType.I1)] bool play);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_player_unload(IntPtr session);
+        internal static extern Result sp_session_player_unload(IntPtr session);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_player_prefetch(IntPtr session, IntPtr track);
+        internal static extern Result sp_session_player_prefetch(IntPtr session, IntPtr track);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_session_playlistcontainer(IntPtr session);
@@ -140,42 +154,42 @@ namespace DotNetify
         internal static extern IntPtr sp_session_publishedcontainer_for_user_create(IntPtr session, IntPtr canonical_username);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_preferred_bitrate(IntPtr session, Bitrate bitrate);
+        internal static extern Result sp_session_preferred_bitrate(IntPtr session, Bitrate bitrate);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_preferred_offline_bitrate(IntPtr session, Bitrate bitrate, [MarshalAs(UnmanagedType.I1)] bool allow_resync);
+        internal static extern Result sp_session_preferred_offline_bitrate(IntPtr session, Bitrate bitrate, [MarshalAs(UnmanagedType.I1)] bool allow_resync);
 
         [DllImport("libspotify")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool sp_session_get_volume_normalization(IntPtr session);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_set_volume_normalization(IntPtr session, [MarshalAs(UnmanagedType.I1)] bool on);
+        internal static extern Result sp_session_set_volume_normalization(IntPtr session, [MarshalAs(UnmanagedType.I1)] bool on);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_set_private_session(IntPtr session, [MarshalAs(UnmanagedType.I1)] bool enabled);
+        internal static extern Result sp_session_set_private_session(IntPtr session, [MarshalAs(UnmanagedType.I1)] bool enabled);
 
         [DllImport("libspotify")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool sp_session_is_private_session(IntPtr session);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_set_scrobbling(IntPtr session, SocialProvider provider, ScrobblingState state);
+        internal static extern Result sp_session_set_scrobbling(IntPtr session, SocialProvider provider, ScrobblingState state);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_is_scrobbling(IntPtr session, SocialProvider provider, ref ScrobblingState state);
+        internal static extern Result sp_session_is_scrobbling(IntPtr session, SocialProvider provider, ref ScrobblingState state);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_is_scrobbling_possible(IntPtr session, SocialProvider provider, [MarshalAs(UnmanagedType.I1)] ref bool @out);
+        internal static extern Result sp_session_is_scrobbling_possible(IntPtr session, SocialProvider provider, [MarshalAs(UnmanagedType.I1)] ref bool @out);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_set_social_credentials(IntPtr session, SocialProvider provider, IntPtr username, IntPtr password);
+        internal static extern Result sp_session_set_social_credentials(IntPtr session, SocialProvider provider, IntPtr username, IntPtr password);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_set_connection_type(IntPtr session, ConnectionType type);
+        internal static extern Result sp_session_set_connection_type(IntPtr session, ConnectionType type);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_session_set_connection_rules(IntPtr session, ConnectionRules rules);
+        internal static extern Result sp_session_set_connection_rules(IntPtr session, ConnectionRules rules);
 
         [DllImport("libspotify")]
         internal static extern int sp_offline_tracks_to_sync(IntPtr session);
@@ -248,17 +262,17 @@ namespace DotNetify
         internal static extern IntPtr sp_link_as_user(IntPtr link);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_link_add_ref(IntPtr link);
+        internal static extern Result sp_link_add_ref(IntPtr link);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_link_release(IntPtr link);
+        internal static extern Result sp_link_release(IntPtr link);
 
         [DllImport("libspotify")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool sp_track_is_loaded(IntPtr track);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_track_error(IntPtr track);
+        internal static extern Result sp_track_error(IntPtr track);
 
         [DllImport("libspotify")]
         internal static extern TrackOfflineStatus sp_track_offline_get_status(IntPtr track);
@@ -286,7 +300,7 @@ namespace DotNetify
         internal static extern bool sp_track_is_starred(IntPtr session, IntPtr track);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_track_set_starred(IntPtr session, IntPtr tracks, int num_tracks, [MarshalAs(UnmanagedType.I1)] bool star);
+        internal static extern Result sp_track_set_starred(IntPtr session, IntPtr tracks, int num_tracks, [MarshalAs(UnmanagedType.I1)] bool star);
 
         [DllImport("libspotify")]
         internal static extern int sp_track_num_artists(IntPtr track);
@@ -316,10 +330,10 @@ namespace DotNetify
         internal static extern IntPtr sp_localtrack_create(IntPtr artist, IntPtr title, IntPtr album, int length);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_track_add_ref(IntPtr track);
+        internal static extern Result sp_track_add_ref(IntPtr track);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_track_release(IntPtr track);
+        internal static extern Result sp_track_release(IntPtr track);
 
         [DllImport("libspotify")]
         [return: MarshalAs(UnmanagedType.I1)]
@@ -345,10 +359,10 @@ namespace DotNetify
         internal static extern AlbumType sp_album_type(IntPtr album);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_album_add_ref(IntPtr album);
+        internal static extern Result sp_album_add_ref(IntPtr album);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_album_release(IntPtr album);
+        internal static extern Result sp_album_release(IntPtr album);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_artist_name(IntPtr artist);
@@ -361,10 +375,10 @@ namespace DotNetify
         internal static extern IntPtr sp_artist_portrait(IntPtr artist, ImageSize size);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_artist_add_ref(IntPtr artist);
+        internal static extern Result sp_artist_add_ref(IntPtr artist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_artist_release(IntPtr artist);
+        internal static extern Result sp_artist_release(IntPtr artist);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_albumbrowse_create(IntPtr session, IntPtr album, albumbrowse_complete_cb callback, IntPtr userdata);
@@ -374,7 +388,7 @@ namespace DotNetify
         internal static extern bool sp_albumbrowse_is_loaded(IntPtr alb);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_albumbrowse_error(IntPtr alb);
+        internal static extern Result sp_albumbrowse_error(IntPtr alb);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_albumbrowse_album(IntPtr alb);
@@ -401,10 +415,10 @@ namespace DotNetify
         internal static extern int sp_albumbrowse_backend_request_duration(IntPtr alb);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_albumbrowse_add_ref(IntPtr alb);
+        internal static extern Result sp_albumbrowse_add_ref(IntPtr alb);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_albumbrowse_release(IntPtr alb);
+        internal static extern Result sp_albumbrowse_release(IntPtr alb);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_artistbrowse_create(IntPtr session, IntPtr artist, ArtistBrowseType type, artistbrowse_complete_cb callback, IntPtr userdata);
@@ -414,7 +428,7 @@ namespace DotNetify
         internal static extern bool sp_artistbrowse_is_loaded(IntPtr arb);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_artistbrowse_error(IntPtr arb);
+        internal static extern Result sp_artistbrowse_error(IntPtr arb);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_artistbrowse_artist(IntPtr arb);
@@ -456,10 +470,10 @@ namespace DotNetify
         internal static extern int sp_artistbrowse_backend_request_duration(IntPtr arb);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_artistbrowse_add_ref(IntPtr arb);
+        internal static extern Result sp_artistbrowse_add_ref(IntPtr arb);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_artistbrowse_release(IntPtr arb);
+        internal static extern Result sp_artistbrowse_release(IntPtr arb);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_image_create(IntPtr session, IntPtr image_id);
@@ -468,17 +482,17 @@ namespace DotNetify
         internal static extern IntPtr sp_image_create_from_link(IntPtr session, IntPtr l);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_image_add_load_callback(IntPtr image, image_loaded_cb callback, IntPtr userdata);
+        internal static extern Result sp_image_add_load_callback(IntPtr image, image_loaded_cb callback, IntPtr userdata);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_image_remove_load_callback(IntPtr image, image_loaded_cb callback, IntPtr userdata);
+        internal static extern Result sp_image_remove_load_callback(IntPtr image, image_loaded_cb callback, IntPtr userdata);
 
         [DllImport("libspotify")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool sp_image_is_loaded(IntPtr image);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_image_error(IntPtr image);
+        internal static extern Result sp_image_error(IntPtr image);
 
         [DllImport("libspotify")]
         internal static extern ImageFormat sp_image_format(IntPtr image);
@@ -490,10 +504,10 @@ namespace DotNetify
         internal static extern IntPtr sp_image_image_id(IntPtr image);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_image_add_ref(IntPtr image);
+        internal static extern Result sp_image_add_ref(IntPtr image);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_image_release(IntPtr image);
+        internal static extern Result sp_image_release(IntPtr image);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_search_create(IntPtr session, IntPtr query, int track_offset, int track_count, int album_offset, int album_count, int artist_offset, int artist_count, int playlist_offset, int playlist_count, SearchType search_type, search_complete_cb callback, IntPtr userdata);
@@ -503,7 +517,7 @@ namespace DotNetify
         internal static extern bool sp_search_is_loaded(IntPtr search);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_search_error(IntPtr search);
+        internal static extern Result sp_search_error(IntPtr search);
 
         [DllImport("libspotify")]
         internal static extern int sp_search_num_tracks(IntPtr search);
@@ -557,20 +571,20 @@ namespace DotNetify
         internal static extern int sp_search_total_playlists(IntPtr search);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_search_add_ref(IntPtr search);
+        internal static extern Result sp_search_add_ref(IntPtr search);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_search_release(IntPtr search);
+        internal static extern Result sp_search_release(IntPtr search);
 
         [DllImport("libspotify")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool sp_playlist_is_loaded(IntPtr playlist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_add_callbacks(IntPtr playlist, IntPtr callbacks, IntPtr userdata);
+        internal static extern Result sp_playlist_add_callbacks(IntPtr playlist, IntPtr callbacks, IntPtr userdata);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_remove_callbacks(IntPtr playlist, IntPtr callbacks, IntPtr userdata);
+        internal static extern Result sp_playlist_remove_callbacks(IntPtr playlist, IntPtr callbacks, IntPtr userdata);
 
         [DllImport("libspotify")]
         internal static extern int sp_playlist_num_tracks(IntPtr playlist);
@@ -589,7 +603,7 @@ namespace DotNetify
         internal static extern bool sp_playlist_track_seen(IntPtr playlist, int index);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_track_set_seen(IntPtr playlist, int index, [MarshalAs(UnmanagedType.I1)] bool seen);
+        internal static extern Result sp_playlist_track_set_seen(IntPtr playlist, int index, [MarshalAs(UnmanagedType.I1)] bool seen);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_playlist_track_message(IntPtr playlist, int index);
@@ -598,7 +612,7 @@ namespace DotNetify
         internal static extern IntPtr sp_playlist_name(IntPtr playlist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_rename(IntPtr playlist, IntPtr new_name);
+        internal static extern Result sp_playlist_rename(IntPtr playlist, IntPtr new_name);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_playlist_owner(IntPtr playlist);
@@ -608,10 +622,10 @@ namespace DotNetify
         internal static extern bool sp_playlist_is_collaborative(IntPtr playlist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_set_collaborative(IntPtr playlist, [MarshalAs(UnmanagedType.I1)] bool collaborative);
+        internal static extern Result sp_playlist_set_collaborative(IntPtr playlist, [MarshalAs(UnmanagedType.I1)] bool collaborative);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_set_autolink_tracks(IntPtr playlist, [MarshalAs(UnmanagedType.I1)] bool link);
+        internal static extern Result sp_playlist_set_autolink_tracks(IntPtr playlist, [MarshalAs(UnmanagedType.I1)] bool link);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_playlist_get_description(IntPtr playlist);
@@ -625,13 +639,13 @@ namespace DotNetify
         internal static extern bool sp_playlist_has_pending_changes(IntPtr playlist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_add_tracks(IntPtr playlist, IntPtr tracks, int num_tracks, int position, IntPtr session);
+        internal static extern Result sp_playlist_add_tracks(IntPtr playlist, IntPtr tracks, int num_tracks, int position, IntPtr session);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_remove_tracks(IntPtr playlist, IntPtr tracks, int num_tracks);
+        internal static extern Result sp_playlist_remove_tracks(IntPtr playlist, IntPtr tracks, int num_tracks);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_reorder_tracks(IntPtr playlist, IntPtr tracks, int num_tracks, int new_position);
+        internal static extern Result sp_playlist_reorder_tracks(IntPtr playlist, IntPtr tracks, int num_tracks, int new_position);
 
         [DllImport("libspotify")]
         internal static extern int sp_playlist_num_subscribers(IntPtr playlist);
@@ -640,23 +654,23 @@ namespace DotNetify
         internal static extern IntPtr sp_playlist_subscribers(IntPtr playlist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_subscribers_free(IntPtr subscribers);
+        internal static extern Result sp_playlist_subscribers_free(IntPtr subscribers);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_update_subscribers(IntPtr session, IntPtr playlist);
+        internal static extern Result sp_playlist_update_subscribers(IntPtr session, IntPtr playlist);
 
         [DllImport("libspotify")]
         [return: MarshalAs(UnmanagedType.I1)]
         internal static extern bool sp_playlist_is_in_ram(IntPtr session, IntPtr playlist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_set_in_ram(IntPtr session, IntPtr playlist, [MarshalAs(UnmanagedType.I1)] bool in_ram);
+        internal static extern Result sp_playlist_set_in_ram(IntPtr session, IntPtr playlist, [MarshalAs(UnmanagedType.I1)] bool in_ram);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_playlist_create(IntPtr session, IntPtr link);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_set_offline_mode(IntPtr session, IntPtr playlist, [MarshalAs(UnmanagedType.I1)] bool offline);
+        internal static extern Result sp_playlist_set_offline_mode(IntPtr session, IntPtr playlist, [MarshalAs(UnmanagedType.I1)] bool offline);
 
         [DllImport("libspotify")]
         internal static extern PlaylistOfflineStatus sp_playlist_get_offline_status(IntPtr session, IntPtr playlist);
@@ -665,16 +679,16 @@ namespace DotNetify
         internal static extern int sp_playlist_get_offline_download_completed(IntPtr session, IntPtr playlist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_add_ref(IntPtr playlist);
+        internal static extern Result sp_playlist_add_ref(IntPtr playlist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlist_release(IntPtr playlist);
+        internal static extern Result sp_playlist_release(IntPtr playlist);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlistcontainer_add_callbacks(IntPtr pc, IntPtr callbacks, IntPtr userdata);
+        internal static extern Result sp_playlistcontainer_add_callbacks(IntPtr pc, IntPtr callbacks, IntPtr userdata);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlistcontainer_remove_callbacks(IntPtr pc, IntPtr callbacks, IntPtr userdata);
+        internal static extern Result sp_playlistcontainer_remove_callbacks(IntPtr pc, IntPtr callbacks, IntPtr userdata);
 
         [DllImport("libspotify")]
         internal static extern int sp_playlistcontainer_num_playlists(IntPtr pc);
@@ -690,7 +704,7 @@ namespace DotNetify
         internal static extern PlaylistType sp_playlistcontainer_playlist_type(IntPtr pc, int index);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlistcontainer_playlist_folder_name(IntPtr pc, int index, IntPtr buffer, int buffer_size);
+        internal static extern Result sp_playlistcontainer_playlist_folder_name(IntPtr pc, int index, IntPtr buffer, int buffer_size);
 
         [DllImport("libspotify")]
         internal static extern ulong sp_playlistcontainer_playlist_folder_id(IntPtr pc, int index);
@@ -702,22 +716,22 @@ namespace DotNetify
         internal static extern IntPtr sp_playlistcontainer_add_playlist(IntPtr pc, IntPtr link);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlistcontainer_remove_playlist(IntPtr pc, int index);
+        internal static extern Result sp_playlistcontainer_remove_playlist(IntPtr pc, int index);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlistcontainer_move_playlist(IntPtr pc, int index, int new_position, [MarshalAs(UnmanagedType.I1)] bool dry_run);
+        internal static extern Result sp_playlistcontainer_move_playlist(IntPtr pc, int index, int new_position, [MarshalAs(UnmanagedType.I1)] bool dry_run);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlistcontainer_add_folder(IntPtr pc, int index, IntPtr name);
+        internal static extern Result sp_playlistcontainer_add_folder(IntPtr pc, int index, IntPtr name);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_playlistcontainer_owner(IntPtr pc);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlistcontainer_add_ref(IntPtr pc);
+        internal static extern Result sp_playlistcontainer_add_ref(IntPtr pc);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_playlistcontainer_release(IntPtr pc);
+        internal static extern Result sp_playlistcontainer_release(IntPtr pc);
 
         [DllImport("libspotify")]
         internal static extern int sp_playlistcontainer_get_unseen_tracks(IntPtr pc, IntPtr playlist, IntPtr tracks, int num_tracks);
@@ -736,10 +750,10 @@ namespace DotNetify
         internal static extern bool sp_user_is_loaded(IntPtr user);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_user_add_ref(IntPtr user);
+        internal static extern Result sp_user_add_ref(IntPtr user);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_user_release(IntPtr user);
+        internal static extern Result sp_user_release(IntPtr user);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_toplistbrowse_create(IntPtr session, ToplistType type, ToplistRegion region, IntPtr username, toplistbrowse_complete_cb callback, IntPtr userdata);
@@ -749,13 +763,13 @@ namespace DotNetify
         internal static extern bool sp_toplistbrowse_is_loaded(IntPtr tlb);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_toplistbrowse_error(IntPtr tlb);
+        internal static extern Result sp_toplistbrowse_error(IntPtr tlb);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_toplistbrowse_add_ref(IntPtr tlb);
+        internal static extern Result sp_toplistbrowse_add_ref(IntPtr tlb);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_toplistbrowse_release(IntPtr tlb);
+        internal static extern Result sp_toplistbrowse_release(IntPtr tlb);
 
         [DllImport("libspotify")]
         internal static extern int sp_toplistbrowse_num_artists(IntPtr tlb);
@@ -782,16 +796,30 @@ namespace DotNetify
         internal static extern IntPtr sp_inbox_post_tracks(IntPtr session, IntPtr user, IntPtr tracks, int num_tracks, IntPtr message, inboxpost_complete_cb callback, IntPtr userdata);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_inbox_error(IntPtr inbox);
+        internal static extern Result sp_inbox_error(IntPtr inbox);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_inbox_add_ref(IntPtr inbox);
+        internal static extern Result sp_inbox_add_ref(IntPtr inbox);
 
         [DllImport("libspotify")]
-        internal static extern Error sp_inbox_release(IntPtr inbox);
+        internal static extern Result sp_inbox_release(IntPtr inbox);
 
         [DllImport("libspotify")]
         internal static extern IntPtr sp_build_id();
+
+        public struct sp_offline_sync_status
+        {
+            public int queued_tracks;
+            public ulong queued_bytes;
+            public int done_tracks;
+            public ulong done_bytes;
+            public int copied_tracks;
+            public ulong copied_bytes;
+            public int willnotcopy_tracks;
+            public int error_tracks;
+            [MarshalAs(UnmanagedType.I1)]
+            public bool syncing;
+        }
 
         internal struct sp_session_callbacks
         {

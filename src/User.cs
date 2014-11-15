@@ -7,13 +7,13 @@ using System.Threading.Tasks;
 
 namespace DotNetify
 {
-    public class Artist : SessionObject
+    public class User : SessionObject
     {
-        public Artist(Session session, IntPtr handle)
+        public User(Session session, IntPtr handle)
             : base(session, handle)
         {
             Contract.Requires<ArgumentNullException>(session != null);
-            Contract.Requires<ArgumentNullException>(handle != IntPtr.Zero);
+            Contract.Requires<ArgumentException>(handle != IntPtr.Zero);
 
             throw new NotImplementedException();
         }
@@ -22,15 +22,7 @@ namespace DotNetify
         {
             lock (NativeMethods.LibraryLock)
             {
-                NativeMethods.sp_artist_add_ref(this.Handle);
-            }
-        }
-
-        private void LoadMetadata()
-        {
-            lock (NativeMethods.LibraryLock)
-            {
-
+                NativeMethods.sp_user_add_ref(this.Handle);
             }
         }
     }

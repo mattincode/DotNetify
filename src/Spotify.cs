@@ -8,67 +8,93 @@ using System.Threading.Tasks;
 
 namespace DotNetify
 {
+    /// <summary>
+    /// Contains global helper methods and constants related to Spotify.
+    /// </summary>
     public static class Spotify
     {
+        /// <summary>
+        /// The version of the API DotNetify is compiled against.
+        /// </summary>
         public const int ApiVersion = 12;
 
-        internal static void CheckForError(Error error)
+        /// <summary>
+        /// Checks whether the specified <paramref name="resultCode"/> is an error and throws the appropriate exception.
+        /// </summary>
+        /// <param name="resultCode">The <see cref="Result"/> to check.</param>
+        public static void CheckForError(Result resultCode)
         {
-            string errorMessage = NativeMethods.sp_error_message(error).AsString();
-
-            switch (error)
+            string errorMessage;
+            lock (NativeMethods.LibraryLock)
             {
-                case Error.NetworkDisabled:
-                case Error.ConnectionIssues:
+                errorMessage = NativeMethods.sp_error_message(resultCode).AsString();
+            }
+
+            switch (resultCode)
+            {
+                case Result.NetworkDisabled:
+                case Result.ConnectionIssues:
                     throw new System.Net.WebException(errorMessage);
-                case Error.InvalidArgument:
+                case Result.InvalidArgument:
                     throw new ArgumentException(errorMessage);
-                case Error.IndexOutOfRange:
+                case Result.IndexOutOfRange:
                     throw new IndexOutOfRangeException(errorMessage);
-                case Error.BadApiVersion:
-                case Error.ApiInitializationFailed:
-                case Error.InvalidApplicationKey:
-                case Error.ClientTooOld:
-                case Error.TrackNotPlayable:
-                case Error.InvalidUsernameOrPassword:
-                case Error.UserBanned:
-                case Error.UndefinedPermanent:
-                case Error.InvalidUserAgent:
-                case Error.MissingCallback:
-                case Error.InvalidInputData:
-                case Error.UserNeedsPremium:
-                case Error.Transient:
-                case Error.IsLoading:
-                case Error.NoStreamAvailable:
-                case Error.PermissionDenied:
-                case Error.TargetInboxFull:
-                case Error.NoCache:
-                case Error.NoSuchUser:
-                case Error.NoCredentials:
-                case Error.InvalidDeviceId:
-                case Error.CantOpenTraceFile:
-                case Error.ApplicationBanned:
-                case Error.OfflineDiskCache:
-                case Error.OfflineExpired:
-                case Error.OfflineNotAllowed:
-                case Error.OfflineLicenseLost:
-                case Error.OfflineLicenseError:
-                case Error.LastFmAuthenticationError:
-                case Error.SystemFailure:
+                case Result.BadApiVersion:
+                case Result.ApiInitializationFailed:
+                case Result.InvalidApplicationKey:
+                case Result.ClientTooOld:
+                case Result.TrackNotPlayable:
+                case Result.InvalidUsernameOrPassword:
+                case Result.UserBanned:
+                case Result.UndefinedPermanent:
+                case Result.InvalidUserAgent:
+                case Result.MissingCallback:
+                case Result.InvalidInputData:
+                case Result.UserNeedsPremium:
+                case Result.Transient:
+                case Result.IsLoading:
+                case Result.NoStreamAvailable:
+                case Result.PermissionDenied:
+                case Result.TargetInboxFull:
+                case Result.NoCache:
+                case Result.NoSuchUser:
+                case Result.NoCredentials:
+                case Result.InvalidDeviceId:
+                case Result.CantOpenTraceFile:
+                case Result.ApplicationBanned:
+                case Result.OfflineDiskCache:
+                case Result.OfflineExpired:
+                case Result.OfflineNotAllowed:
+                case Result.OfflineLicenseLost:
+                case Result.OfflineLicenseError:
+                case Result.LastFmAuthenticationError:
+                case Result.SystemFailure:
                     throw new InvalidOperationException(errorMessage);
-                case Error.None:
+                case Result.None:
                     break;
                 default:
                     throw new ArgumentException("The value of parameter error was undefined.", "error");
             }
         }
 
-        internal static string AsString(this IntPtr charPtr)
+        /// <summary>
+        /// Converts the specified, UTF-8 encoded, zero terminated character array into a <see cref="String"/>.
+        /// </summary>
+        /// <param name="charPtr">The pointer to the char array.</param>
+        /// <returns>The decoded <see cref="String"/>.</returns>
+        public static string AsString(this IntPtr charPtr)
         {
             return AsString(charPtr, Encoding.UTF8);
         }
 
-        internal static string AsString(this IntPtr charPtr, Encoding encoding)
+        /// <summary>
+        /// Converts the speicified, zero terminated character array into a <see cref="String"/>. The specified
+        /// <paramref name="encoding"/> will be used to decode the data.
+        /// </summary>
+        /// <param name="charPtr">The pointer to the char array.</param>
+        /// <param name="encoding">The encoding used to decode the data into the <see cref="String"/>.</param>
+        /// <returns>The decoded <see cref="String"/>.</returns>
+        public static string AsString(this IntPtr charPtr, Encoding encoding)
         {
             Contract.Requires<ArgumentNullException>(encoding != null);
 

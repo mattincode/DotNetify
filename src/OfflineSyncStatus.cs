@@ -13,39 +13,14 @@ namespace DotNetify
     public struct OfflineSyncStatus : ICloneable, IEquatable<OfflineSyncStatus>
     {
         /// <summary>
-        /// The remaining tracks to synchronize.
-        /// </summary>
-        public int QueuedTracks { get; private set; }
-
-        /// <summary>
-        /// The remaining bytes to synchronize.
-        /// </summary>
-        public ulong QueuedBytes { get; private set; }
-
-        /// <summary>
-        /// The tracks that have already been on the device, so they didn't have to be synchronized.
-        /// </summary>
-        public int AlreadySynchronizedTracks { get; private set; }
-
-        /// <summary>
         /// The bytes that have already been on the device, so they didn't have to be synchronized.
         /// </summary>
         public ulong AlreadySynchronizedBytes { get; private set; }
 
         /// <summary>
-        /// The already synchronized tracks.
+        /// The tracks that have already been on the device, so they didn't have to be synchronized.
         /// </summary>
-        public int SynchronizedTracks { get; private set; }
-
-        /// <summary>
-        /// The already synchronized tracks.
-        /// </summary>
-        public ulong SynchronizedBytes { get; private set; }
-
-        /// <summary>
-        /// The tracks that will not be copied for whatever reason.
-        /// </summary>
-        public int WillNotCopyTracks { get; private set; }
+        public int AlreadySynchronizedTracks { get; private set; }
 
         /// <summary>
         /// Tracks where something went wrong while synchronizing.
@@ -73,17 +48,42 @@ namespace DotNetify
             }
         }
 
+        /// <summary>
+        /// The remaining bytes to synchronize.
+        /// </summary>
+        public ulong QueuedBytes { get; private set; }
+
+        /// <summary>
+        /// The remaining tracks to synchronize.
+        /// </summary>
+        public int QueuedTracks { get; private set; }
+
+        /// <summary>
+        /// The already synchronized tracks.
+        /// </summary>
+        public ulong SynchronizedBytes { get; private set; }
+
+        /// <summary>
+        /// The already synchronized tracks.
+        /// </summary>
+        public int SynchronizedTracks { get; private set; }
+
+        /// <summary>
+        /// The tracks that will not be copied for whatever reason.
+        /// </summary>
+        public int WillNotCopyTracks { get; private set; }
+
         public OfflineSyncStatus(
-                    int queuedTracks,
-                    ulong queuedBytes,
-                    int finishedTracks,
-                    ulong finishedBytes,
-                    int copiedTracks,
-                    ulong copiedBytes,
-                    int willNotCopyTracks,
-                    int erroneousTracks,
-                    bool isSyncing
-                )
+                            int queuedTracks,
+                            ulong queuedBytes,
+                            int finishedTracks,
+                            ulong finishedBytes,
+                            int copiedTracks,
+                            ulong copiedBytes,
+                            int willNotCopyTracks,
+                            int erroneousTracks,
+                            bool isSyncing
+                        )
             : this()
         {
             this.QueuedTracks = queuedTracks;
@@ -139,14 +139,14 @@ namespace DotNetify
             );
         }
 
-        public static bool operator ==(OfflineSyncStatus left, OfflineSyncStatus right)
-        {
-            return left.Equals(right);
-        }
-
         public static bool operator !=(OfflineSyncStatus left, OfflineSyncStatus right)
         {
             return !(left == right);
+        }
+
+        public static bool operator ==(OfflineSyncStatus left, OfflineSyncStatus right)
+        {
+            return left.Equals(right);
         }
     }
 }

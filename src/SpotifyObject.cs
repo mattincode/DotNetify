@@ -6,7 +6,7 @@ using System.Threading.Tasks;
 
 namespace DotNetify
 {
-    public class SpotifyObject : ObservableObject, IDisposable
+    public abstract class SpotifyObject : ObservableObject, IDisposable
     {
         private IntPtr _Handle;
 
@@ -43,6 +43,18 @@ namespace DotNetify
         {
             this.Handle = IntPtr.Zero;
             GC.SuppressFinalize(this);
+        }
+
+        /// <summary>
+        /// Disposes the specified <paramref name="disposable"/>, if it is not <c>null</c>.
+        /// </summary>
+        /// <param name="disposable">The <see cref="IDisposable"/> to be disposed. May be null.</param>
+        protected void Dispose(IDisposable disposable)
+        {
+            if (disposable != null)
+            {
+                disposable.Dispose();
+            }
         }
     }
 }

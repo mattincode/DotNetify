@@ -29,8 +29,6 @@ namespace DotNetify
 
         public int Size { get; private set; }
 
-        public string Value { get; private set; }
-
         public NativeString(string s) : this(s, Encoding.UTF8) { }
 
         public NativeString(string s, Encoding encoding)
@@ -51,7 +49,6 @@ namespace DotNetify
                 this.Handle = IntPtr.Zero;
                 this.Size = 0;
             }
-            this.Value = s;
         }
 
         ~NativeString()
@@ -71,11 +68,6 @@ namespace DotNetify
         public static implicit operator IntPtr(NativeString s)
         {
             return (s != null) ? s.Handle : IntPtr.Zero;
-        }
-
-        public static implicit operator string(NativeString s)
-        {
-            return (s != null) ? s.Value : null;
         }
     }
 }
