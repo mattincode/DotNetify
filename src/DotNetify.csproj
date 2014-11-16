@@ -134,7 +134,6 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Album.cs" />
-    <Compile Include="AlbumBrowse.cs" />
     <Compile Include="Enums\AlbumType.cs" />
     <Compile Include="Artist.cs" />
     <Compile Include="Enums\ArtistBrowseType.cs" />

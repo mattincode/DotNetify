@@ -13,11 +13,6 @@ namespace DotNetify
     public class Album : SessionObject
     {
         /// <summary>
-        /// A <see cref="AlbumBrowse"/>-object used to query additional metadata.
-        /// </summary>
-        private AlbumBrowse albumBrowse;
-
-        /// <summary>
         /// Backing field.
         /// </summary>
         private Artist _Artist;
@@ -243,7 +238,28 @@ namespace DotNetify
                     this.Type = NativeMethods.sp_album_type(this.Handle);
                     this.Year = NativeMethods.sp_album_year(this.Handle);
 
-                    this.albumBrowse = new AlbumBrowse(s, this);
+                    NativeMethods.sp_albumbrowse_create(s.Handle, handle, (h, u) =>
+                    {
+                        lock (NativeMethods.LibraryLock)
+                        {
+                            if (NativeMethods.sp_albumbrowse_error(h) == Result.Ok)
+                            {
+                                this.Copyrights = Enumerable.Range(0, NativeMethods.sp_albumbrowse_num_copyrights(handle))
+                                                            .Select(i => NativeMethods.sp_albumbrowse_copyright(handle, i).AsString())
+                                                            .ToArray();
+                                this.Review = NativeMethods.sp_albumbrowse_review(handle).AsString();
+                                Track[] tracks = Enumerable.Range(0, NativeMethods.sp_albumbrowse_num_tracks(handle))
+                                                           .Select(i => new Track(s, NativeMethods.sp_albumbrowse_track(handle, i)))
+                                                           .ToArray();
+                                foreach (Track t in tracks)
+                                {
+                                    t.AddRef();
+                                }
+                                this.Tracks = tracks;
+                            }
+                            NativeMethods.sp_albumbrowse_release(h);
+                        }
+                    }, IntPtr.Zero);
                 }
             }
         }
