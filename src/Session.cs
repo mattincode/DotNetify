@@ -625,7 +625,7 @@ namespace DotNetify
                 EventHandler<MusicDeliveryEventArgs> handler = this.MusicDelivery;
                 if (handler != null)
                 {
-                    handler(this, new MusicDeliveryEventArgs(this, new MusicPackage(format, frames, frameCount)));
+                    handler(this, new MusicDeliveryEventArgs(this, new MusicPacket(format, frames, frameCount)));
                 }
                 return result;
             }

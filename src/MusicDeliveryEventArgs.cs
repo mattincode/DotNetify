@@ -9,9 +9,9 @@ namespace DotNetify
 {
     public class MusicDeliveryEventArgs : SpotifyEventArgs
     {
-        public MusicPackage MusicData { get; private set; }
+        public MusicPacket MusicData { get; private set; }
 
-        public MusicDeliveryEventArgs(Session session, MusicPackage musicData)
+        public MusicDeliveryEventArgs(Session session, MusicPacket musicData)
             : base(session)
         {
             Contract.Requires<ArgumentNullException>(session != null);

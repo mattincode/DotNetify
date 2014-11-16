@@ -7,7 +7,7 @@ using System.Threading.Tasks;
 
 namespace DotNetify
 {
-    public struct MusicPackage : ICloneable, IEquatable<MusicPackage>
+    public struct MusicPacket : ICloneable, IEquatable<MusicPacket>
     {
         /// <summary>
         /// The audio format descriptor.
@@ -15,7 +15,7 @@ namespace DotNetify
         public AudioFormat Format { get; private set; }
 
         /// <summary>
-        /// The raw PCM data as described by <paramref name="format"/>.
+        /// The raw PCM data as described by <see cref="P:Format"/>.
         /// </summary>
         public IntPtr Frames { get; private set; }
 
@@ -25,7 +25,7 @@ namespace DotNetify
         /// </summary>
         public int FrameCount { get; private set; }
 
-        public MusicPackage(AudioFormat format, IntPtr frames, int frameCount)
+        public MusicPacket(AudioFormat format, IntPtr frames, int frameCount)
             : this()
         {
             Contract.Requires<ArgumentException>(frames != IntPtr.Zero);
@@ -38,7 +38,7 @@ namespace DotNetify
 
         public object Clone()
         {
-            return new MusicPackage(this.Format, this.Frames, this.FrameCount);
+            return new MusicPacket(this.Format, this.Frames, this.FrameCount);
         }
 
         public override bool Equals(object obj)
@@ -46,10 +46,10 @@ namespace DotNetify
             if (ReferenceEquals(obj, null))
                 return false;
 
-            return (obj is MusicPackage) ? this.Equals((MusicPackage)obj) : false;
+            return (obj is MusicPacket) ? this.Equals((MusicPacket)obj) : false;
         }
 
-        public bool Equals(MusicPackage other)
+        public bool Equals(MusicPacket other)
         {
             return (this.Format == other.Format) && (this.Frames == other.Frames) &&
                    (this.FrameCount == other.FrameCount);
@@ -60,12 +60,12 @@ namespace DotNetify
             return HashF.GetHashCode(this.Format, this.Frames, this.FrameCount);
         }
 
-        public static bool operator ==(MusicPackage left, MusicPackage right)
+        public static bool operator ==(MusicPacket left, MusicPacket right)
         {
             return left.Equals(right);
         }
 
-        public static bool operator !=(MusicPackage left, MusicPackage right)
+        public static bool operator !=(MusicPacket left, MusicPacket right)
         {
             return !(left == right);
         }

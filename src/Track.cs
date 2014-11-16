@@ -144,26 +144,6 @@ namespace DotNetify
         /// <summary>
         /// Backing field.
         /// </summary>
-        private bool _IsLoaded;
-
-        /// <summary>
-        /// Indicates whether the <see cref="Track"/>s metadata has loaded.
-        /// </summary>
-        public bool IsLoaded
-        {
-            get
-            {
-                return _IsLoaded;
-            }
-            private set
-            {
-                this.SetProperty(ref _IsLoaded, value);
-            }
-        }
-
-        /// <summary>
-        /// Backing field.
-        /// </summary>
         private bool _IsLocal;
 
         /// <summary>
@@ -367,7 +347,8 @@ namespace DotNetify
                 {
                     this.Album = new Album(session, NativeMethods.sp_track_album(handle));
                     this.Artists = Enumerable.Range(0, NativeMethods.sp_track_num_artists(handle))
-                                             .Select(i => new Artist(session, NativeMethods.sp_track_artist(handle, i))).ToArray();
+                                             .Select(i => new Artist(session, NativeMethods.sp_track_artist(handle, i)))
+                                             .ToArray();
                     this.Availability = NativeMethods.sp_track_get_availability(session.Handle, handle);
                     this.Disc = NativeMethods.sp_track_disc(handle);
                     this.Duration = TimeSpan.FromMilliseconds(NativeMethods.sp_track_duration(handle));

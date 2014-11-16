@@ -134,6 +134,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Album.cs" />
+    <Compile Include="AlbumBrowse.cs" />
     <Compile Include="Enums\AlbumType.cs" />
     <Compile Include="Artist.cs" />
     <Compile Include="Enums\ArtistBrowseType.cs" />
@@ -144,6 +145,8 @@
     <Compile Include="Enums\ConnectionState.cs" />
     <Compile Include="ConnectionStateUpdatedEventArgs.cs" />
     <Compile Include="Enums\ConnectionType.cs" />
+    <Compile Include="Image.cs" />
+    <Compile Include="Link.cs" />
     <Compile Include="NativeIntPtrArray.cs" />
     <Compile Include="Enums\Result.cs" />
     <Compile Include="HashF.cs" />
