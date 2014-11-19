@@ -82,7 +82,7 @@ namespace DotNetify
         /// </summary>
         /// <param name="charPtr">The pointer to the char array.</param>
         /// <returns>The decoded <see cref="String"/>.</returns>
-        public static string AsString(this IntPtr charPtr)
+        internal static string AsString(this IntPtr charPtr)
         {
             return AsString(charPtr, Encoding.UTF8);
         }
@@ -94,7 +94,7 @@ namespace DotNetify
         /// <param name="charPtr">The pointer to the char array.</param>
         /// <param name="encoding">The encoding used to decode the data into the <see cref="String"/>.</param>
         /// <returns>The decoded <see cref="String"/>.</returns>
-        public static string AsString(this IntPtr charPtr, Encoding encoding)
+        internal static string AsString(this IntPtr charPtr, Encoding encoding)
         {
             Contract.Requires<ArgumentNullException>(encoding != null);
 

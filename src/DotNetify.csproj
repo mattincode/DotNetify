@@ -144,6 +144,7 @@
     <Compile Include="Enums\ConnectionState.cs" />
     <Compile Include="ConnectionStateUpdatedEventArgs.cs" />
     <Compile Include="Enums\ConnectionType.cs" />
+    <Compile Include="Enums\UserRelationType.cs" />
     <Compile Include="Image.cs" />
     <Compile Include="Link.cs" />
     <Compile Include="NativeIntPtrArray.cs" />
@@ -155,7 +156,9 @@
     <Compile Include="LoggedInEventArgs.cs" />
     <Compile Include="NativeByteArray.cs" />
     <Compile Include="NativeStruct.cs" />
+    <Compile Include="Playlist.cs" />
     <Compile Include="ProxyConfig.cs" />
+    <Compile Include="Search.cs" />
     <Compile Include="SessionConfig.cs" />
     <Compile Include="SessionModeChangedEventArgs.cs" />
     <Compile Include="SessionObject.cs" />

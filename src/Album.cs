@@ -46,7 +46,7 @@ namespace DotNetify
             {
                 return _Copyrights;
             }
-            internal set
+            private set
             {
                 this.SetProperty(ref _Copyrights, value);
             }
@@ -106,7 +106,7 @@ namespace DotNetify
             {
                 return _Review;
             }
-            internal set
+            private set
             {
                 this.SetProperty(ref _Review, value);
             }
@@ -126,7 +126,7 @@ namespace DotNetify
             {
                 return _Tracks;
             }
-            internal set
+            private set
             {
                 this.SetProperty(ref _Tracks, value);
             }
