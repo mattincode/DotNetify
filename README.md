@@ -32,7 +32,7 @@ SessionConfig config = new SessionConfig()
 Session session = new Session(config);
 ```
 
-Inside the (CallbackHandler)[https://github.com/SkyLapse/DotNetify/blob/master/src/CallbackHandler.cs] 
+Inside the [CallbackHandler](https://github.com/SkyLapse/DotNetify/blob/master/src/CallbackHandler.cs) 
 (and through the event) you'll receive raw PCM data from libspotify which you can play.
 
 ```
