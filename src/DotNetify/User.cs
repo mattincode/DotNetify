@@ -10,6 +10,9 @@ namespace DotNetify
     /// <summary>
     /// Represents a Spotify user.
     /// </summary>
+    /// <remarks>
+    /// This class wraps sp_user.
+    /// </remarks>
     public class User : SessionObject
     {
         /// <summary>
@@ -55,7 +58,7 @@ namespace DotNetify
         {
             lock (NativeMethods.LibraryLock)
             {
-                NativeMethods.sp_user_add_ref(this.Handle);
+                NativeMethods.sp_user_add_ref(this.Handle).ThrowIfError();
             }
         }
 
@@ -90,6 +93,7 @@ namespace DotNetify
                 {
                     this.CanonicalName = NativeMethods.sp_user_canonical_name(handle).AsString();
                     this.Name = NativeMethods.sp_user_display_name(handle).AsString();
+                    this.RaiseInitializationComplete();
                 }
             }
         }

@@ -57,6 +57,42 @@ namespace DotNetify
         }
 
         /// <summary>
+        /// Raises the specified <see cref="EventHandler"/> and checks for null.
+        /// </summary>
+        /// <param name="handler">The event to raise.</param>
+        protected void Raise(EventHandler handler)
+        {
+            this.Raise(handler, EventArgs.Empty);
+        }
+
+        /// <summary>
+        /// Raises the specified <see cref="EventHandler"/> and checks for null.
+        /// </summary>
+        /// <param name="handler">The event to raise.</param>
+        /// <param name="args">Event arguments.</param>
+        protected void Raise(EventHandler handler, EventArgs args)
+        {
+            if (handler != null)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
+        /// Raises the specified <see cref="EventHandler{T}"/> and checks for null.
+        /// </summary>
+        /// <typeparam name="T">The <see cref="Type"/> of event arguments.</typeparam>
+        /// <param name="args">Event arguments.</param>
+        /// <param name="handler">The event to raise.</param>
+        protected void Raise<T>(EventHandler<T> handler, T args)
+        {
+            if (handler != null)
+            {
+                handler(this, args);
+            }
+        }
+
+        /// <summary>
         /// Invokes the specified delegate via late binding. See remarks.
         /// </summary>
         /// <remarks>Late binding is slow, avoid this method wherever possible.</remarks>

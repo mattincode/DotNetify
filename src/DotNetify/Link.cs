@@ -11,6 +11,9 @@ namespace DotNetify
     /// <summary>
     /// Represents a link, an abstraction over a textual ID to a Spotify entity.
     /// </summary>
+    /// <remarks>
+    /// This class wraps sp_link.
+    /// </remarks>
     public class Link : SessionObject
     {
         /// <summary>
@@ -241,7 +244,7 @@ namespace DotNetify
         {
             lock (NativeMethods.LibraryLock)
             {
-                NativeMethods.sp_link_add_ref(this.Handle);
+                NativeMethods.sp_link_add_ref(this.Handle).ThrowIfError();
             }
         }
 
@@ -481,7 +484,7 @@ namespace DotNetify
         {
             lock (NativeMethods.LibraryLock)
             {
-                NativeMethods.sp_link_release(this.Handle);
+                NativeMethods.sp_link_release(this.Handle).ThrowIfError();
             }
             base.Dispose(disposing);
         }
@@ -492,6 +495,11 @@ namespace DotNetify
         private void Initialize()
         {
             this.IsLoaded = true;
+            lock (NativeMethods.LibraryLock)
+            {
+                this.Type = NativeMethods.sp_link_type(this.Handle);
+            }
+            this.RaiseInitializationComplete();
         }
     }
 }

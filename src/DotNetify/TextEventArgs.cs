@@ -7,24 +7,27 @@ using System.Threading.Tasks;
 
 namespace DotNetify
 {
-    public class SpotifyResultEventArgs : SpotifyEventArgs
+    /// <summary>
+    /// Event arguments with a text message.
+    /// </summary>
+    public class TextEventArgs : SpotifyEventArgs
     {
         /// <summary>
-        /// The function result.
+        /// The text.
         /// </summary>
-        public Result Result { get; private set; }
+        public string Text { get; private set; }
 
         /// <summary>
-        /// Initializes a new <see cref="SpotifyResultEventArgs"/>.
+        /// Initializes new <see cref="TextEventArgs"/>.
         /// </summary>
         /// <param name="session">The <see cref="Session"/>.</param>
-        /// <param name="result">The function result.</param>
-        public SpotifyResultEventArgs(Session session, Result result)
+        /// <param name="text">The text.</param>
+        public TextEventArgs(Session session, string text)
             : base(session)
         {
             Contract.Requires<ArgumentNullException>(session != null);
 
-            this.Result = result;
+            this.Text = text;
         }
     }
 }

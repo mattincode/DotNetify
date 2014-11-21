@@ -15,26 +15,6 @@ namespace DotNetify
         /// <summary>
         /// Backing field.
         /// </summary>
-        private int _ApiVersion;
-
-        /// <summary>
-        /// The version of the Spotify API your application is compiled with. Set to #SPOTIFY_API_VERSION
-        /// </summary>
-        public int ApiVersion
-        {
-            get
-            {
-                return _ApiVersion;
-            }
-            set
-            {
-                this.SetProperty(ref _ApiVersion, value);
-            }
-        }
-
-        /// <summary>
-        /// Backing field.
-        /// </summary>
         private byte[] _ApplicationKey;
 
         /// <summary>
@@ -75,6 +55,26 @@ namespace DotNetify
         /// <summary>
         /// Backing field.
         /// </summary>
+        private int _CacheSize;
+
+        /// <summary>
+        /// The maximum cache size in megabytes. Setting this to 0 will let libspotify resize the cache to 10% of free disk space.
+        /// </summary>
+        public int CacheSize
+        {
+            get
+            {
+                return _CacheSize;
+            }
+            set
+            {
+                this.SetProperty(ref _CacheSize, value);
+            }
+        }
+
+        /// <summary>
+        /// Backing field.
+        /// </summary>
         private CallbackHandler _CallbackHandler;
 
         /// <summary>
@@ -98,7 +98,7 @@ namespace DotNetify
         private bool _CompressPlaylists;
 
         /// <summary>
-        /// Compress local copy of playlists, reduces disk space usage
+        /// Compress local copy of playlists, reduces disk space usage.
         /// </summary>
         public bool CompressPlaylists
         {
@@ -140,7 +140,7 @@ namespace DotNetify
         private bool _DontLoadPlaylistsOnStartup;
 
         /// <summary>
-        /// Avoid loading playlists into RAM on startup. See <see cref="Playlist.IsInRam"/> for more details.
+        /// Avoid loading playlists into RAM on startup to reduce memory usage. See <see cref="Playlist.IsInRam"/> for more details.
         /// </summary>
         public bool DontLoadPlaylistsOnStartup
         {
@@ -260,26 +260,6 @@ namespace DotNetify
             set
             {
                 this.SetProperty(ref _UserAgent, value);
-            }
-        }
-
-        /// <summary>
-        /// Backing field.
-        /// </summary>
-        private byte[] _UserData;
-
-        /// <summary>
-        /// User supplied data for your application
-        /// </summary>
-        public byte[] UserData
-        {
-            get
-            {
-                return _UserData;
-            }
-            set
-            {
-                this.SetProperty(ref _UserData, value);
             }
         }
     }

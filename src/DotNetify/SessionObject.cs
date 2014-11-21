@@ -12,6 +12,11 @@ namespace DotNetify
     public abstract class SessionObject : SpotifyObject
     {
         /// <summary>
+        /// Raised when the initialization of the <see cref="SessionObject"/> was complete and all properties are available.
+        /// </summary>
+        public event EventHandler InitializationComplete;
+
+        /// <summary>
         /// Backing field.
         /// </summary>
         private bool _IsLoaded;
@@ -90,7 +95,7 @@ namespace DotNetify
 
         /// <summary>
         /// Increases the reference count to the specified instance preventing it from being released on
-        /// <see cref="Dispose"/>. See remarks.
+        /// <see cref="M:Dispose"/>. See remarks.
         /// </summary>
         /// <remarks>
         /// <para>
@@ -101,5 +106,13 @@ namespace DotNetify
         /// no other instance needs the instance anymore, this does not need to be called.</para>
         /// </remarks>
         public abstract void AddRef();
+
+        /// <summary>
+        /// Raises the <see cref="E:InitializationComplete"/>-event.
+        /// </summary>
+        protected void RaiseInitializationComplete()
+        {
+            this.Raise(this.InitializationComplete);
+        }
     }
 }

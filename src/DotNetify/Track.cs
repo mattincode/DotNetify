@@ -11,6 +11,9 @@ namespace DotNetify
     /// <summary>
     /// Represents a piece of music.
     /// </summary>
+    /// <remarks>
+    /// This class wraps sp_track.
+    /// </remarks>
     public class Track : SessionObject
     {
         /// <summary>
@@ -215,7 +218,7 @@ namespace DotNetify
                 {
                     using (NativeIntPtrArray nativeTracks = new NativeIntPtrArray(new[] { this.Handle }))
                     {
-                        Spotify.CheckForError(NativeMethods.sp_track_set_starred(s.Handle, nativeTracks, 1, value));
+                        NativeMethods.sp_track_set_starred(s.Handle, nativeTracks, 1, value).ThrowIfError();
                     }
                 }
                 this.SetProperty(ref _IsStarred, value);
@@ -287,7 +290,7 @@ namespace DotNetify
         {
             lock (NativeMethods.LibraryLock)
             {
-                Spotify.CheckForError(NativeMethods.sp_track_add_ref(this.Handle));
+                NativeMethods.sp_track_add_ref(this.Handle).ThrowIfError();
             }
         }
 
@@ -354,10 +357,12 @@ namespace DotNetify
                     this.Duration = TimeSpan.FromMilliseconds(NativeMethods.sp_track_duration(handle));
                     this.Index = NativeMethods.sp_track_index(handle);
                     this.IsLocal = NativeMethods.sp_track_is_local(session.Handle, handle);
-                    this.IsStarred = NativeMethods.sp_track_is_starred(session.Handle, handle);
+                    this.SetProperty(ref _IsStarred, NativeMethods.sp_track_is_starred(session.Handle, handle), "IsStarred");
                     this.Name = NativeMethods.sp_track_name(handle).AsString();
                     this.OfflineStatus = NativeMethods.sp_track_offline_get_status(handle);
                     this.Popularity = NativeMethods.sp_track_popularity(handle);
+
+                    this.RaiseInitializationComplete();
                 }
             }
         }

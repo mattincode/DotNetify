@@ -64,10 +64,10 @@ namespace DotNetify
         /// Gets playback statistics.
         /// </summary>
         /// <param name="session">The <see cref="Session"/>.</param>
-        /// <param name="stats"><see cref="AudioBufferStatistics"/> for feedback about player statistics.</param>
-        public virtual void GetAudioBufferStats(Session session, ref AudioBufferStatistics stats)
+        /// <returns><see cref="AudioBufferStatistics"/> for feedback about player statistics.</returns>
+        public virtual AudioBufferStatistics GetAudioBufferStats(Session session) 
         {
-            stats = default(AudioBufferStatistics);
+            return default(AudioBufferStatistics);
         }
 
         /// <summary>
@@ -113,19 +113,14 @@ namespace DotNetify
         /// Called when there is decompressed audio data available.
         /// </summary>
         /// <param name="session">The <see cref="Session"/>.</param>
-        /// <param name="format">The audio format descriptor.</param>
-        /// <param name="frames">The raw PCM data as described by <paramref name="format"/>.</param>
-        /// <param name="frameCount">
-        /// The frame count. If this is 0, a discontinuity has occurred (such as after a seek). 
-        /// The application should flush its audio fifos, etc.
-        /// </param>
+        /// <param name="musicPacket">The delivery music data.</param>
         /// <returns>
         /// The number of frames consumed. This value can be used to rate limit the output 
         /// from the library if your output buffers are saturated. The library will retry delivery in about 100ms.
         /// </returns>
-        public virtual int MusicDelivery(Session session, AudioFormat format, IntPtr frames, int frameCount)
+        public virtual int MusicDelivery(Session session, MusicPacket musicPacket)
         {
-            return frameCount;
+            return musicPacket.FrameCount;
         }
 
         /// <summary>
@@ -150,7 +145,8 @@ namespace DotNetify
         /// Called when offline synchronization status is updated.
         /// </summary>
         /// <param name="session">The <see cref="Session"/>.</param>
-        public virtual void OfflineSynchronizationStatusChanged(Session session) { }
+        /// <param name="status">The new offline synchronization status.</param>
+        public virtual void OfflineSynchronizationStatusChanged(Session session, OfflineSyncStatus status) { }
 
         /// <summary>
         /// Music has been paused because an account only allows music to be played from one location simultaneously.

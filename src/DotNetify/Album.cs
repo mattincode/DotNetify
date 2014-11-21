@@ -10,6 +10,9 @@ namespace DotNetify
     /// <summary>
     /// Represents an album, a fixed collection of music.
     /// </summary>
+    /// <remarks>
+    /// This class wraps sp_album and sp_albumbrowse.
+    /// </remarks>
     public class Album : SessionObject
     {
         /// <summary>
@@ -181,6 +184,19 @@ namespace DotNetify
         /// <param name="session">The <see cref="Session"/> the <see cref="Album"/> is associated with.</param>
         /// <param name="handle">The handle to the underlying libspotify album object.</param>
         public Album(Session session, IntPtr handle)
+            : this(session, handle, false)
+        {
+            Contract.Requires<ArgumentNullException>(session != null);
+            Contract.Requires<ArgumentNullException>(handle != IntPtr.Zero);
+        }
+
+        /// <summary>
+        /// Initializes a new <see cref="Album"/> without loading additional metadata.
+        /// </summary>
+        /// <param name="session">The <see cref="Session"/> the <see cref="Album"/> is associated with.</param>
+        /// <param name="handle">The handle to the underlying libspotify album object.</param>
+        /// <param name="loadAdditionalMetadata">Indicates whether to load additional metadata that can be obtained through the API.</param>
+        public Album(Session session, IntPtr handle, bool loadAdditionalMetadata)
             : base(session)
         {
             Contract.Requires<ArgumentNullException>(session != null);
@@ -188,6 +204,10 @@ namespace DotNetify
 
             session.MetadataUpdateReceived += (s, e) => this.LoadMetadata();
             this.LoadMetadata();
+            if (loadAdditionalMetadata)
+            {
+                this.LoadAdditionalMetadata();
+            }
         }
 
         /// <summary>
@@ -198,7 +218,53 @@ namespace DotNetify
         {
             lock (NativeMethods.LibraryLock)
             {
-                NativeMethods.sp_album_add_ref(this.Handle);
+                NativeMethods.sp_album_add_ref(this.Handle).ThrowIfError();
+            }
+        }
+
+        /// <summary>
+        /// Loads additional metadata about the album, such as its tracks, copyright information and a review.
+        /// </summary>
+        public void LoadAdditionalMetadata()
+        {
+            Session s = this.Session;
+            if (s == null)
+            {
+                throw new InvalidOperationException("Session was null, cannot load the metadata. This is a programming bug, and SHOULD NOT happen at runtime. Please contact the developers.");
+            }
+
+            lock (NativeMethods.LibraryLock)
+            {
+                IntPtr handle = this.Handle;
+                NativeMethods.sp_albumbrowse_create(s.Handle, handle, (h, u) =>
+                {
+                    lock (NativeMethods.LibraryLock)
+                    {
+                        try
+                        {
+                            if (NativeMethods.sp_albumbrowse_error(h) == Result.Ok)
+                            {
+                                this.Copyrights = Enumerable.Range(0, NativeMethods.sp_albumbrowse_num_copyrights(handle))
+                                                            .Select(i => NativeMethods.sp_albumbrowse_copyright(handle, i).AsString())
+                                                            .ToArray();
+                                this.Review = NativeMethods.sp_albumbrowse_review(handle).AsString();
+                                Track[] tracks = Enumerable.Range(0, NativeMethods.sp_albumbrowse_num_tracks(handle))
+                                                           .Select(i => new Track(s, NativeMethods.sp_albumbrowse_track(handle, i)))
+                                                           .ToArray();
+                                foreach (Track t in tracks) // Increment refcount because albumbrowse-object will be disposed and we don't want the tracks to die
+                                {
+                                    t.AddRef();
+                                }
+                                this.Tracks = tracks;
+                            }
+                        }
+                        finally
+                        {
+                            NativeMethods.sp_albumbrowse_release(h);
+                        }
+                    }
+                    this.RaiseInitializationComplete();
+                }, IntPtr.Zero);
             }
         }
 
@@ -210,7 +276,7 @@ namespace DotNetify
         {
             lock (NativeMethods.LibraryLock)
             {
-                NativeMethods.sp_album_release(this.Handle);
+                NativeMethods.sp_album_release(this.Handle).ThrowIfError();
             }
             base.Dispose(disposing);
         }
@@ -238,28 +304,7 @@ namespace DotNetify
                     this.Type = NativeMethods.sp_album_type(this.Handle);
                     this.Year = NativeMethods.sp_album_year(this.Handle);
 
-                    NativeMethods.sp_albumbrowse_create(s.Handle, handle, (h, u) =>
-                    {
-                        lock (NativeMethods.LibraryLock)
-                        {
-                            if (NativeMethods.sp_albumbrowse_error(h) == Result.Ok)
-                            {
-                                this.Copyrights = Enumerable.Range(0, NativeMethods.sp_albumbrowse_num_copyrights(handle))
-                                                            .Select(i => NativeMethods.sp_albumbrowse_copyright(handle, i).AsString())
-                                                            .ToArray();
-                                this.Review = NativeMethods.sp_albumbrowse_review(handle).AsString();
-                                Track[] tracks = Enumerable.Range(0, NativeMethods.sp_albumbrowse_num_tracks(handle))
-                                                           .Select(i => new Track(s, NativeMethods.sp_albumbrowse_track(handle, i)))
-                                                           .ToArray();
-                                foreach (Track t in tracks)
-                                {
-                                    t.AddRef();
-                                }
-                                this.Tracks = tracks;
-                            }
-                            NativeMethods.sp_albumbrowse_release(h);
-                        }
-                    }, IntPtr.Zero);
+                    this.RaiseInitializationComplete();
                 }
             }
         }

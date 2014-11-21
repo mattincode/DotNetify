@@ -7,16 +7,16 @@ using System.Threading.Tasks;
 
 namespace DotNetify
 {
-    public class TextEventArgs : SpotifyEventArgs
+    public class OfflineSyncStatusChangedEventArgs : SpotifyEventArgs
     {
-        public string Text { get; private set; }
+        public OfflineSyncStatus SyncStatus { get; private set; }
 
-        public TextEventArgs(Session session, string text)
+        public OfflineSyncStatusChangedEventArgs(Session session, OfflineSyncStatus syncStatus)
             : base(session)
         {
             Contract.Requires<ArgumentNullException>(session != null);
 
-            this.Text = text;
+            this.SyncStatus = syncStatus;
         }
     }
 }

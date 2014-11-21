@@ -15,12 +15,12 @@ namespace DotNetify
         public string Url { get; private set; }
 
         /// <summary>
-        /// Username to authenticate with proxy server.
+        /// Username to authenticate with the proxy server.
         /// </summary>
         public string Username { get; private set; }
 
         /// <summary>
-        /// Password to authenticate with proxy server.
+        /// Password to authenticate with the proxy server.
         /// </summary>
         public string Password { get; private set; }
 

@@ -12,14 +12,16 @@ namespace DotNetify
     /// Represents a spotify session.
     /// </summary>
     /// <remarks>
-    /// Currently (because of how libspotify is implemented) only one session can exist per process (which is a fugly shame!).
+    /// Currently (because of how libspotify is implemented) only one session can exist per process. Should libspotify be able
+    /// to deal with multiple sessions per process this library will be adapted. (Probably doesn't even need any changes, it does
+    /// not care about how many sessions are present at a time)
     /// </remarks>
     public class Session : SpotifyObject
     {
         /// <summary>
-        /// The <see cref="SessionConfig"/> used to initialize the <see cref="Session"/>.
+        /// The <see cref="CallbackHandler"/> handling the libspotify callbacks.
         /// </summary>
-        private readonly SessionConfig config;
+        private readonly CallbackHandler callbackHandler;
 
         /// <summary>
         /// Called when there is a connection error, and the library has problems
@@ -119,7 +121,7 @@ namespace DotNetify
         /// <summary>
         /// Called when offline synchronization status is updated.
         /// </summary>
-        public event EventHandler<SpotifyEventArgs> OfflineSyncStatusChanged;
+        public event EventHandler<OfflineSyncStatusChangedEventArgs> OfflineSyncStatusChanged;
 
         /// <summary>
         /// Called when there was an offline error.
@@ -142,21 +144,17 @@ namespace DotNetify
         private int _CacheSize;
 
         /// <summary>
-        /// The maximum cache size. Setting this to 0 will let libspotify resize the cache to 10% of free disk space.
+        /// The maximum cache size in megabytes.
         /// </summary>
         public int CacheSize
         {
             get
             {
-                throw new NotImplementedException();
-
                 return _CacheSize;
             }
-            set
+            private set
             {
                 Contract.Requires<ArgumentOutOfRangeException>(value >= 0);
-
-                throw new NotImplementedException();
 
                 this.SetProperty(ref _CacheSize, value);
             }
@@ -174,14 +172,10 @@ namespace DotNetify
         {
             get
             {
-                throw new NotImplementedException();
-
                 return _ConnectionState;
             }
             private set
             {
-                throw new NotImplementedException();
-
                 this.SetProperty(ref _ConnectionState, value);
             }
         }
@@ -235,45 +229,17 @@ namespace DotNetify
         /// <summary>
         /// Fetches the currently logged in user.
         /// </summary>
-        public User User
+        public User User // Will be set in LoggedIn callback
         {
             get
             {
-                throw new NotImplementedException();
-
                 return _User;
             }
             private set
             {
-                throw new NotImplementedException();
-
                 this.SetProperty(ref _User, value);
             }
         }
-
-        ///// <summary>
-        ///// Backing field.
-        ///// </summary>
-        //private byte[] _UserData;
-
-        ///// <summary>
-        ///// The userdata associated with the session.
-        ///// </summary>
-        //public byte[] UserData
-        //{
-        //    get
-        //    {
-        //        throw new NotImplementedException();
-
-        //        return _UserData;
-        //    }
-        //    set
-        //    {
-        //        throw new NotImplementedException();
-
-        //        this.SetProperty(ref _UserData, value);
-        //    }
-        //}
 
         /// <summary>
         /// Initializes a new <see cref="Session"/>.
@@ -282,8 +248,6 @@ namespace DotNetify
         {
             Contract.Requires<ArgumentNullException>(sessionConfig != null);
             Contract.Requires<ArgumentException>(sessionConfig.CallbackHandler != null);
-
-            this.config = sessionConfig;
 
             NativeMethods.sp_session_callbacks callbacks = new NativeMethods.sp_session_callbacks();
             callbacks.connection_error = new connection_error(this.ConnectionErrorCallback);
@@ -318,11 +282,10 @@ namespace DotNetify
             using (NativeString nativeSettingsLocation = new NativeString(sessionConfig.SettingsLocation))
             using (NativeString nativeTracefile = new NativeString(sessionConfig.TraceFile))
             using (NativeString nativeUserAgent = new NativeString(sessionConfig.UserAgent))
-            using (NativeByteArray nativeUserData = new NativeByteArray(sessionConfig.UserData))
             {
                 NativeMethods.sp_session_config config = new NativeMethods.sp_session_config();
 
-                config.api_version = sessionConfig.ApiVersion;
+                config.api_version = Spotify.ApiVersion;
                 config.application_key = nativeKey;
                 config.application_key_size = (UIntPtr)nativeKey.Length;
                 config.cache_location = nativeCacheLocation;
@@ -337,27 +300,18 @@ namespace DotNetify
                 config.settings_location = nativeSettingsLocation;
                 config.tracefile = nativeTracefile;
                 config.user_agent = nativeUserAgent;
-                config.userdata = nativeUserData;
 
                 IntPtr sessionHandle = IntPtr.Zero;
                 lock (NativeMethods.LibraryLock)
                 {
-                    NativeMethods.sp_session_create(ref config, ref sessionHandle);
+                    NativeMethods.sp_session_create(ref config, ref sessionHandle).ThrowIfError();
                 }
                 this.Handle = sessionHandle;
             }
 
+            this.CacheSize = sessionConfig.CacheSize;
+            this.callbackHandler = sessionConfig.CallbackHandler;
             this.Player = new Player(this);
-
-            this.ConnectionStateUpdated += (s, e) => this.ConnectionState = e.ConnectionState;
-            this.LoggedIn += (s, e) => 
-            {
-                if (e.Result == Result.Ok)
-                {
-                    this.User = e.User;
-                }
-            };
-            this.LoggedOut += (s, e) => this.User = null;
         }
 
         /// <summary>
@@ -412,6 +366,11 @@ namespace DotNetify
         /// Logs in the specified username/password combo. This initiates the login in the background.
         /// A callback is called when login is complete.
         /// </summary>
+        /// <remarks>
+        /// When using this overload instead of the other one accepting strings you are able to pass in native arrays.
+        /// The benefit of those arrays is that they can be freed / cleared out directly after their usage. Thus, the password
+        /// will not be left in application memory any longer than needed.
+        /// </remarks>
         /// <param name="utf8Password">A pointer to the UTF-8 encoded password.</param>
         /// <param name="utf8Username">A pointer to the UTF-8 encoded username.</param>
         /// <param name="rememberMe">If set, the username / password will be remembered by libspotify.</param>
@@ -427,7 +386,7 @@ namespace DotNetify
             {
                 lock (NativeMethods.LibraryLock)
                 {
-                    Spotify.CheckForError(NativeMethods.sp_session_login(this.Handle, utf8Username, utf8Password, rememberMe, nativeBlob));
+                    NativeMethods.sp_session_login(this.Handle, utf8Username, utf8Password, rememberMe, nativeBlob).ThrowIfError();
                 }
             }
         }
@@ -446,7 +405,7 @@ namespace DotNetify
         {
             lock (NativeMethods.LibraryLock)
             {
-                Spotify.CheckForError(NativeMethods.sp_session_logout(this.Handle));
+                NativeMethods.sp_session_logout(this.Handle).ThrowIfError();
             }
         }
 
@@ -458,7 +417,7 @@ namespace DotNetify
             lock (NativeMethods.LibraryLock)
             {
                 int nextRequest = 0;
-                Spotify.CheckForError(NativeMethods.sp_session_process_events(this.Handle, ref nextRequest));
+                NativeMethods.sp_session_process_events(this.Handle, ref nextRequest).ThrowIfError();
                 return nextRequest;
             }
         }
@@ -499,7 +458,7 @@ namespace DotNetify
             this.Logout();
             lock (NativeMethods.LibraryLock)
             {
-                NativeMethods.sp_session_release(this.Handle);
+                NativeMethods.sp_session_release(this.Handle).ThrowIfError();
             }
             base.Dispose(disposing);
         }
@@ -510,7 +469,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.ConnectionError(this, error);
+                this.callbackHandler.ConnectionError(this, error);
                 this.Raise(this.ConnectionError, error);
             }
         }
@@ -524,7 +483,9 @@ namespace DotNetify
                 {
                     state = NativeMethods.sp_session_connectionstate(this.Handle);
                 }
-                this.config.CallbackHandler.ConnectionStateUpdated(this, state);
+
+                this.callbackHandler.ConnectionStateUpdated(this, state);
+                this.ConnectionState = state;
                 EventHandler<ConnectionStateUpdatedEventArgs> handler = this.ConnectionStateUpdated;
                 if (handler != null)
                 {
@@ -538,7 +499,7 @@ namespace DotNetify
             if (this.Handle == session)
             {
                 string blobString = blob.AsString();
-                this.config.CallbackHandler.CredentialsBlobUpdated(this, blobString);
+                this.callbackHandler.CredentialsBlobUpdated(this, blobString);
                 this.Raise(this.CredentialsBlobUpdated, blobString);
             }
         }
@@ -547,7 +508,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.EndOfTrack(this);
+                this.callbackHandler.EndOfTrack(this);
                 this.Raise(this.EndOfTrack);
             }
         }
@@ -556,7 +517,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.GetAudioBufferStats(this, ref stats);
+                stats = this.callbackHandler.GetAudioBufferStats(this);
                 // No event here, since its more of a request from the library than a push of new information
             }
         }
@@ -570,7 +531,8 @@ namespace DotNetify
                 {
                     user = new User(this, NativeMethods.sp_session_user(this.Handle));
                 }
-                this.config.CallbackHandler.LoggedIn(this, error, user);
+                this.callbackHandler.LoggedIn(this, error, user);
+                this.User = user;
                 EventHandler<LoggedInEventArgs> handler = this.LoggedIn;
                 if (handler != null)
                 {
@@ -583,7 +545,8 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.LoggedOut(this);
+                this.callbackHandler.LoggedOut(this);
+                this.User = null;
                 this.Raise(this.LoggedOut);
             }
         }
@@ -593,7 +556,7 @@ namespace DotNetify
             if (this.Handle == session)
             {
                 string logData = data.AsString();
-                this.config.CallbackHandler.LogMessage(this, logData);
+                this.callbackHandler.LogMessage(this, logData);
                 this.Raise(this.LogMessageArrived, logData);
             }
         }
@@ -603,7 +566,7 @@ namespace DotNetify
             if (this.Handle == session)
             {
                 string messageString = message.AsString();
-                this.config.CallbackHandler.MessageToUser(this, messageString);
+                this.callbackHandler.MessageToUser(this, messageString);
                 this.Raise(this.MessageToUserReceived, messageString);
             }
         }
@@ -612,7 +575,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.MetadataUpdateReceived(this);
+                this.callbackHandler.MetadataUpdateReceived(this);
                 this.Raise(this.MetadataUpdateReceived);
             }
         }
@@ -621,11 +584,12 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                int result = this.config.CallbackHandler.MusicDelivery(this, format, frames, frameCount);
+                MusicPacket packet = new MusicPacket(format, frames, frameCount);
+                int result = this.callbackHandler.MusicDelivery(this, packet);
                 EventHandler<MusicDeliveryEventArgs> handler = this.MusicDelivery;
                 if (handler != null)
                 {
-                    handler(this, new MusicDeliveryEventArgs(this, new MusicPacket(format, frames, frameCount)));
+                    handler(this, new MusicDeliveryEventArgs(this, packet));
                 }
                 return result;
             }
@@ -636,7 +600,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.NotifyMainThread(this);
+                this.callbackHandler.NotifyMainThread(this);
                 this.Raise(this.MainThreadProcessingRequest);
                 this.NeedsProcessing = true;
             }
@@ -646,7 +610,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.OfflineError(this, error);
+                this.callbackHandler.OfflineError(this, error);
                 this.Raise(this.OfflineError, error);
             }
         }
@@ -655,8 +619,37 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.OfflineSynchronizationStatusChanged(this);
-                this.Raise(this.OfflineSyncStatusChanged);
+                IntPtr statusPtr = IntPtr.Zero;
+                try
+                {
+                    statusPtr = Marshal.AllocHGlobal(Marshal.SizeOf(typeof(NativeMethods.sp_offline_sync_status)));
+                    bool isSyncing;
+                    lock (NativeMethods.LibraryLock)
+                    {
+                        isSyncing = NativeMethods.sp_offline_sync_get_status(this.Handle, statusPtr);
+                    }
+                    if (isSyncing)
+                    {
+                        NativeMethods.sp_offline_sync_status nativeSyncStatus = (NativeMethods.sp_offline_sync_status)Marshal.PtrToStructure(statusPtr, typeof(NativeMethods.sp_offline_sync_status));
+                        OfflineSyncStatus syncStatus = new OfflineSyncStatus(
+                            nativeSyncStatus.queued_tracks, nativeSyncStatus.queued_bytes, nativeSyncStatus.done_tracks,
+                            nativeSyncStatus.done_bytes, nativeSyncStatus.copied_tracks, nativeSyncStatus.copied_bytes,
+                            nativeSyncStatus.willnotcopy_tracks, nativeSyncStatus.error_tracks,
+                            nativeSyncStatus.syncing
+                        );
+
+                        this.callbackHandler.OfflineSynchronizationStatusChanged(this, syncStatus);
+                        EventHandler<OfflineSyncStatusChangedEventArgs> handler = this.OfflineSyncStatusChanged;
+                        if (handler != null)
+                        {
+                            handler(this, new OfflineSyncStatusChangedEventArgs(this, syncStatus));
+                        }
+                    }
+                }
+                finally
+                {
+                    Marshal.FreeHGlobal(statusPtr);
+                }
             }
         }
 
@@ -664,7 +657,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.PlayTokenLost(this);
+                this.callbackHandler.PlayTokenLost(this);
                 this.Raise(this.PlayTokenLost);
             }
         }
@@ -673,7 +666,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.SessionModeChanged(this, isPrivate);
+                this.callbackHandler.SessionModeChanged(this, isPrivate);
                 EventHandler<SessionModeChangedEventArgs> handler = this.SessionModeChanged;
                 if (handler != null)
                 {
@@ -686,7 +679,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.ScrobbleError(this, error);
+                this.callbackHandler.ScrobbleError(this, error);
                 this.Raise(this.ScrobbleError, error);
             }
         }
@@ -695,7 +688,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.StartPlayback(this);
+                this.callbackHandler.StartPlayback(this);
                 this.Raise(this.PlaybackStarted);
             }
         }
@@ -704,7 +697,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.StopPlayback(this);
+                this.callbackHandler.StopPlayback(this);
                 this.Raise(this.PlaybackStopped);
             }
         }
@@ -713,7 +706,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.StreamingError(this, error);
+                this.callbackHandler.StreamingError(this, error);
                 this.Raise(this.StreamingError, error);
             }
         }
@@ -722,7 +715,7 @@ namespace DotNetify
         {
             if (this.Handle == session)
             {
-                this.config.CallbackHandler.UserinfoUpdated(this);
+                this.callbackHandler.UserinfoUpdated(this);
                 this.Raise(this.UserInfoUpdated);
             }
         }

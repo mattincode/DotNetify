@@ -1,9 +1,11 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
 # Visual Studio 2013
-VisualStudioVersion = 12.0.30723.0
+VisualStudioVersion = 12.0.31101.0
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetify", "src/DotNetify.csproj", "{A69BF18D-3FB7-44D3-8B5C-286F35B0F82F}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetify", "src\DotNetify\DotNetify.csproj", "{A69BF18D-3FB7-44D3-8B5C-286F35B0F82F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "DotNetifyTests", "src\DotNetifyTests\DotNetifyTests.csproj", "{22AFA62F-E4D4-4C0E-8D28-4193585D1F20}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -15,6 +17,10 @@ Global
 		{A69BF18D-3FB7-44D3-8B5C-286F35B0F82F}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{A69BF18D-3FB7-44D3-8B5C-286F35B0F82F}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{A69BF18D-3FB7-44D3-8B5C-286F35B0F82F}.Release|Any CPU.Build.0 = Release|Any CPU
+		{22AFA62F-E4D4-4C0E-8D28-4193585D1F20}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{22AFA62F-E4D4-4C0E-8D28-4193585D1F20}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{22AFA62F-E4D4-4C0E-8D28-4193585D1F20}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{22AFA62F-E4D4-4C0E-8D28-4193585D1F20}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
